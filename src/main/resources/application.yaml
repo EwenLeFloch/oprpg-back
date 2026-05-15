@@ -1,3 +1,17 @@
 spring:
   application:
-    name: api
+    name: oprpg-api
+  datasource:
+    url: jdbc:mysql://localhost:3306/one_piece_rpg
+    username: oprpg
+    password: password
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8080
