@@ -1,0 +1,16 @@
+services:
+    mysql:
+        image: mysql:8.4
+        container_name: oprpg-mysql
+        restart: unless-stopped
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_DATABASE: one_piece_rpg
+            MYSQL_USER: oprpg
+            MYSQL_PASSWORD: password
+        ports:
+            - "3306:3306"
+        volumes:
+            - oprpg_mysql_data:/var/lib/mysql
+volumes:
+    oprpg_mysql_data:
