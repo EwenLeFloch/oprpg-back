@@ -14,13 +14,13 @@ public class Utilisateur {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String username;
+    private String pseudo;
 
     @Column(nullable = false, unique = true)
-    private String mail;
+    private String email;
 
     @Column(nullable = false)
-    private String password;
+    private String motDePasseHash;
 
     @Column(nullable = false)
     private String role = "USER";

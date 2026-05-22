@@ -1,5 +1,6 @@
 package com.onepiecerpg.api.service;
 
+import com.onepiecerpg.api.dto.InscriptionRequest;
 import com.onepiecerpg.api.entity.Utilisateur;
 import com.onepiecerpg.api.repository.UtilisateurRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,14 +16,17 @@ public class UtilisateurService {
     this.passwordEncoder = passwordEncoder;
   }
 
-  public Utilisateur creerUtilisateur(Utilisateur utilisateur) {
-    utilisateurRepository.findByMail(utilisateur.getMail())
+  public Utilisateur creerUtilisateur(InscriptionRequest request) {
+    utilisateurRepository.findByEmail(request.getEmail())
         .ifPresent(u -> { throw new IllegalArgumentException("L'email existe déjà"); });
 
-    utilisateurRepository.findByUsername(utilisateur.getUsername())
-        .ifPresent(u -> { throw new IllegalArgumentException("Le nom d'utilisateur existe déjà"); });
+    utilisateurRepository.findByPseudo(request.getPseudo())
+        .ifPresent(u -> { throw new IllegalArgumentException("Le pseudo existe déjà"); });
 
-    utilisateur.setPassword(passwordEncoder.encode(utilisateur.getPassword()));
+    Utilisateur utilisateur = new Utilisateur();
+    utilisateur.setPseudo(request.getPseudo());
+    utilisateur.setEmail(request.getEmail());
+    utilisateur.setMotDePasseHash(passwordEncoder.encode(request.getMotDePasse()));
     utilisateur.setRole("USER");
 
     return utilisateurRepository.save(utilisateur);

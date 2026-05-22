@@ -28,11 +28,6 @@ public class AuthController {
   public Utilisateur inscription(
     @Valid @RequestBody InscriptionRequest request
   ) {
-    Utilisateur utilisateur = new Utilisateur();
-    utilisateur.setUsername(request.getUsername());
-    utilisateur.setMail(request.getMail());
-    utilisateur.setPassword(request.getPassword());
-
-    return utilisateurService.creerUtilisateur(utilisateur);
+    return utilisateurService.creerUtilisateur(request);
   }
 }
