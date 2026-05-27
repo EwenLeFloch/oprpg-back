@@ -30,4 +30,26 @@ class UtilisateurRepositoryTest {
     assertThat(result).isPresent();
     assertThat(result.get().getPseudo()).isEqualTo("testuser");
   }
+
+  @Test
+  @DisplayName("Doit trouver un utilisateur par pseudo")
+  void shouldFindUserByPseudo() {
+    Utilisateur utilisateur = new Utilisateur();
+    utilisateur.setPseudo("testuser");
+    utilisateur.setEmail("test@test.com");
+    utilisateur.setMotDePasseHash("hashedpassword");
+    utilisateur.setRole("USER");
+    utilisateurRepository.save(utilisateur);
+
+    Optional<Utilisateur> result = utilisateurRepository.findByPseudo("testuser");
+    assertThat(result).isPresent();
+    assertThat(result.get().getEmail()).isEqualTo("test@test.com");
+  }
+
+  @Test
+  @DisplayName("Doit retourner vide si l'email n'existe pas")
+  void shouldReturnEmptyWhenEmailNotFound() {
+    Optional<Utilisateur> result = utilisateurRepository.findByEmail("email-invalide@test.com");
+    assertThat(result).isEmpty();
+  }
 }

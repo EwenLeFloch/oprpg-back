@@ -7,6 +7,8 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.onepiecerpg.api.dto.ConnexionRequest;
+import com.onepiecerpg.api.dto.ConnexionResponse;
 import com.onepiecerpg.api.dto.InscriptionRequest;
 import com.onepiecerpg.api.entity.Utilisateur;
 import com.onepiecerpg.api.repository.UtilisateurRepository;
@@ -49,5 +51,103 @@ class UtilisateurServiceTest {
     assertThat(utilisateurSauvegarde.getPseudo()).isEqualTo("testuser");
     assertThat(utilisateurSauvegarde.getEmail()).isEqualTo("test@test.com");
     assertThat(passwordEncoder.matches("Password123", utilisateurSauvegarde.getMotDePasseHash())).isTrue();
+  }
+
+  @Test
+  @DisplayName("Doit refuser la création d'un utilisateur avec un email existant")
+  void shouldRejectDuplicateEmail() {
+    InscriptionRequest request = new InscriptionRequest();
+    request.setPseudo("testuser");
+    request.setEmail("test@test.com");
+    request.setMotDePasse("Password123");
+
+    Utilisateur utilisateurExistant = new Utilisateur();
+    utilisateurExistant.setEmail("test@test.com");
+
+    when(utilisateurRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(utilisateurExistant));
+
+    assertThatThrownBy(() -> utilisateurService.creerUtilisateur(request))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Cet email existe déjà");
+
+    verify(utilisateurRepository, never()).save(any());
+  }
+
+  @Test
+  @DisplayName("Doit refuser la création d'un utilisateur avec un pseudo existant")
+  void shouldRejectDuplicatePseudo() {
+    InscriptionRequest request = new InscriptionRequest();
+    request.setPseudo("testuser");
+    request.setEmail("test@test.com");
+    request.setMotDePasse("Password123");
+
+    Utilisateur utilisateurExistant = new Utilisateur();
+    utilisateurExistant.setPseudo("testuser");
+
+    when(utilisateurRepository.findByEmail(request.getEmail())).thenReturn(Optional.empty());
+    when(utilisateurRepository.findByPseudo(request.getPseudo())).thenReturn(Optional.of(utilisateurExistant));
+
+    assertThatThrownBy(() -> utilisateurService.creerUtilisateur(request))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Ce pseudo existe déjà");
+
+    verify(utilisateurRepository, never()).save(any());
+  }
+
+  @Test
+  @DisplayName("Doit connecter un utilisateur avec des identifiants valides")
+  void shouldLoginUser() {
+    String motDePasseBrut = "Password123";
+
+    Utilisateur utilisateur = new Utilisateur();
+    utilisateur.setPseudo("testuser");
+    utilisateur.setEmail("test@test.com");
+    utilisateur.setMotDePasseHash(passwordEncoder.encode(motDePasseBrut));
+    utilisateur.setRole("USER");
+
+    ConnexionRequest request = new ConnexionRequest();
+    request.setEmail("test@test.com");
+    request.setMotDePasse(motDePasseBrut);
+
+    when(utilisateurRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(utilisateur));
+    ConnexionResponse response = utilisateurService.connecterUtilisateur(request);
+
+    assertThat(response.message()).isEqualTo("Connexion réussie");
+    assertThat(response.pseudo()).isEqualTo("testuser");
+    assertThat(response.role()).isEqualTo("USER");
+  }
+
+  @Test
+  @DisplayName("Doit refuser une connexion avec un mot de passe incorrect")
+  void shouldRejectLoginWithInvalidPassword() {
+    Utilisateur utilisateur = new Utilisateur();
+    utilisateur.setPseudo("testuser");
+    utilisateur.setEmail("luffy@test.com");
+    utilisateur.setMotDePasseHash(passwordEncoder.encode("Password123"));
+    utilisateur.setRole("USER");
+
+    ConnexionRequest request = new ConnexionRequest();
+    request.setEmail("test@test.com");
+    request.setMotDePasse("WrongPassword123");
+
+    when(utilisateurRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(utilisateur));
+
+    assertThatThrownBy(() -> utilisateurService.connecterUtilisateur(request))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Email ou mot de passe incorrect");
+  }
+
+  @Test
+  @DisplayName("Doit refuser une connexion avec un email inconnu")
+  void shouldRejectLoginWithUnknownEmail() {
+    ConnexionRequest request = new ConnexionRequest();
+    request.setEmail("unknown@test.com");
+    request.setMotDePasse("Password123");
+
+    when(utilisateurRepository.findByEmail(request.getEmail())).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> utilisateurService.connecterUtilisateur(request))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Email ou mot de passe incorrect");
   }
 }

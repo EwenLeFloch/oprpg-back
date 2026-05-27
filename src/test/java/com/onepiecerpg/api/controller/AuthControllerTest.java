@@ -14,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.onepiecerpg.api.dto.ConnexionResponse;
 import com.onepiecerpg.api.entity.Utilisateur;
 import com.onepiecerpg.api.service.UtilisateurService;
 
@@ -53,5 +54,62 @@ class AuthControllerTest {
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.pseudo").value("testuser"))
         .andExpect(jsonPath("$.email").value("test@test.com"));
+  }
+
+  @Test
+  @DisplayName("Doit retourner 400 lors d'une inscription avec un email déjà utilisé")
+  void shouldReturnBadQuestWhenRegisterInvalid() throws Exception {
+
+    String body = """
+        {
+          "pseudo": "",
+          "email": "email-invalide",
+          "motDePasse": "Password"
+        }
+        """;
+
+    mockMvc.perform(post("/api/auth/inscription")
+        .contentType("application/json")
+        .content(body))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @DisplayName("Doit retourner 200 lors d'une connexion valide")
+  void shouldLoginUser() throws Exception {
+    ConnexionResponse response = new ConnexionResponse("Connexion réussie", "testuser", "USER");
+
+    when(utilisateurService.connecterUtilisateur(ArgumentMatchers.any())).thenReturn(response);
+
+    String body = """
+        {
+          "email": "test@test.com",
+          "motDePasse": "Password123"
+        }
+        """;
+
+    mockMvc.perform(post("/api/auth/connexion")
+        .contentType("application/json")
+        .content(body))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.message").value("Connexion réussie"))
+        .andExpect(jsonPath("$.pseudo").value("testuser"))
+        .andExpect(jsonPath("$.role").value("USER"));
+  }
+
+  @Test
+  @DisplayName("Doit retourner 400 lors d'une connexion invalide")
+  void shouldReturnBadRequestWhenLoginInvalid() throws Exception {
+    String body = """
+        {
+          "email": "email-invalide",
+          "motDePasse": "",
+        }
+        """;
+
+    mockMvc.perform(post("/api/auth/connexion")
+        .contentType("application/json")
+        .content(body))
+        .andExpect(status().isBadRequest());
   }
 }

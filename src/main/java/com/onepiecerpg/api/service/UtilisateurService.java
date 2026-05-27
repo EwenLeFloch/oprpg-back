@@ -1,5 +1,7 @@
 package com.onepiecerpg.api.service;
 
+import com.onepiecerpg.api.dto.ConnexionRequest;
+import com.onepiecerpg.api.dto.ConnexionResponse;
 import com.onepiecerpg.api.dto.InscriptionRequest;
 import com.onepiecerpg.api.entity.Utilisateur;
 import com.onepiecerpg.api.repository.UtilisateurRepository;
@@ -18,10 +20,10 @@ public class UtilisateurService {
 
   public Utilisateur creerUtilisateur(InscriptionRequest request) {
     utilisateurRepository.findByEmail(request.getEmail())
-        .ifPresent(u -> { throw new IllegalArgumentException("L'email existe déjà"); });
+        .ifPresent(u -> { throw new IllegalArgumentException("Cet email existe déjà"); });
 
     utilisateurRepository.findByPseudo(request.getPseudo())
-        .ifPresent(u -> { throw new IllegalArgumentException("Le pseudo existe déjà"); });
+        .ifPresent(u -> { throw new IllegalArgumentException("Ce pseudo existe déjà"); });
 
     Utilisateur utilisateur = new Utilisateur();
     utilisateur.setPseudo(request.getPseudo());
@@ -31,4 +33,22 @@ public class UtilisateurService {
 
     return utilisateurRepository.save(utilisateur);
   }
+
+  public ConnexionResponse connecterUtilisateur(ConnexionRequest request) {
+    Utilisateur utilisateur = utilisateurRepository.findByEmail(request.getEmail())
+        .orElseThrow(() -> new IllegalArgumentException("Email ou mot de passe incorrect"));
+
+    boolean motDePasseValide = passwordEncoder.matches(request.getMotDePasse(), utilisateur.getMotDePasseHash());
+    if (!motDePasseValide) {
+      throw new IllegalArgumentException("Email ou mot de passe incorrect");
+    }
+
+    return new ConnexionResponse(
+        "Connexion réussie",
+        utilisateur.getPseudo(),
+        utilisateur.getRole()
+    );
+  }
 }
+
+

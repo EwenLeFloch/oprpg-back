@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.HttpStatus;
 
+import com.onepiecerpg.api.dto.ConnexionRequest;
+import com.onepiecerpg.api.dto.ConnexionResponse;
 import com.onepiecerpg.api.dto.InscriptionRequest;
 import com.onepiecerpg.api.entity.Utilisateur;
 import com.onepiecerpg.api.service.UtilisateurService;
@@ -29,5 +31,12 @@ public class AuthController {
     @Valid @RequestBody InscriptionRequest request
   ) {
     return utilisateurService.creerUtilisateur(request);
+  }
+
+  @PostMapping("/connexion")
+  public ConnexionResponse connexion(
+    @Valid @RequestBody ConnexionRequest request
+  ) {
+    return utilisateurService.connecterUtilisateur(request);
   }
 }

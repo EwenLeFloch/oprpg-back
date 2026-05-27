@@ -14,24 +14,14 @@ public class SecurityConfig {
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    http
-      .csrf(AbstractHttpConfigurer::disable)
-      .authorizeHttpRequests(auth -> auth
-      .requestMatchers("/api/auth/**",
-                            "/swagger-ui.html",
-                            "/swagger-ui/**",
-                            "/v3/api-docs",
-                            "/v3/api-docs/**",
-                            "/swagger-resources/**",
-                            "/webjars/**"
-      )
-      .permitAll()
-      .anyRequest()
-      .authenticated()
-      )
-      .httpBasic(Customizer.withDefaults());
-
-    return http.build();
+    return http
+        .csrf(AbstractHttpConfigurer::disable)
+        .formLogin(AbstractHttpConfigurer::disable)
+        .httpBasic(AbstractHttpConfigurer::disable)
+        .authorizeHttpRequests(auth -> auth
+            .anyRequest().permitAll()
+        )
+        .build();
   }
   
   @Bean
