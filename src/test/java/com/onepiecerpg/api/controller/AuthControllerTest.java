@@ -77,7 +77,7 @@ class AuthControllerTest {
   @Test
   @DisplayName("Doit retourner 200 lors d'une connexion valide")
   void shouldLoginUser() throws Exception {
-    ConnexionResponse response = new ConnexionResponse("Connexion réussie", "testuser", "USER");
+    ConnexionResponse response = new ConnexionResponse("mocked-token", "Bearer", "testuser", "USER");
 
     when(utilisateurService.connecterUtilisateur(ArgumentMatchers.any())).thenReturn(response);
 
@@ -92,7 +92,8 @@ class AuthControllerTest {
         .contentType("application/json")
         .content(body))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.message").value("Connexion réussie"))
+        .andExpect(jsonPath("$.token").value("mocked-token"))
+        .andExpect(jsonPath("$.type").value("Bearer"))
         .andExpect(jsonPath("$.pseudo").value("testuser"))
         .andExpect(jsonPath("$.role").value("USER"));
   }

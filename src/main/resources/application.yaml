@@ -13,5 +13,9 @@ spring:
       hibernate:
         format_sql: true
 
+jwt:
+  secret: "votre_clé_secrète_pour_signer_les_tokens_jwt"
+  expiration: 86400000 # 1 jour en millisecondes
+
 server:
   port: 8080

@@ -12,10 +12,12 @@ import org.springframework.stereotype.Service;
 public class UtilisateurService {
   private final UtilisateurRepository utilisateurRepository;
   private final PasswordEncoder passwordEncoder;
+  private final JwtService jwtService;
 
-  public UtilisateurService(UtilisateurRepository utilisateurRepository, PasswordEncoder passwordEncoder) {
+  public UtilisateurService(UtilisateurRepository utilisateurRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
     this.utilisateurRepository = utilisateurRepository;
     this.passwordEncoder = passwordEncoder;
+    this.jwtService = jwtService;
   }
 
   public Utilisateur creerUtilisateur(InscriptionRequest request) {
@@ -43,9 +45,12 @@ public class UtilisateurService {
       throw new IllegalArgumentException("Email ou mot de passe incorrect");
     }
 
+    String token = jwtService.genererToken(utilisateur);
+
     return new ConnexionResponse(
-        "Connexion réussie",
-        utilisateur.getPseudo(),
+      token,
+      "Bearer",
+      utilisateur.getPseudo(),
         utilisateur.getRole()
     );
   }

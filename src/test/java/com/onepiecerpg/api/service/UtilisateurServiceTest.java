@@ -22,12 +22,19 @@ class UtilisateurServiceTest {
   private UtilisateurRepository utilisateurRepository;
   private UtilisateurService utilisateurService;
   private PasswordEncoder passwordEncoder;
+  private JwtService jwtService;
 
   @BeforeEach
   void setUp() {
     utilisateurRepository = mock(UtilisateurRepository.class);
     passwordEncoder = new BCryptPasswordEncoder();
-    utilisateurService = new UtilisateurService(utilisateurRepository, passwordEncoder);
+    jwtService = mock(JwtService.class);
+
+    utilisateurService = new UtilisateurService(
+      utilisateurRepository,
+      passwordEncoder,
+      jwtService
+    );
   }
 
   @Test
@@ -110,9 +117,11 @@ class UtilisateurServiceTest {
     request.setMotDePasse(motDePasseBrut);
 
     when(utilisateurRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(utilisateur));
+    when(jwtService.genererToken(any(Utilisateur.class))).thenReturn("mocked-token");
     ConnexionResponse response = utilisateurService.connecterUtilisateur(request);
 
-    assertThat(response.message()).isEqualTo("Connexion réussie");
+    assertThat(response.token()).isEqualTo("mocked-token");
+    assertThat(response.type()).isEqualTo("Bearer");
     assertThat(response.pseudo()).isEqualTo("testuser");
     assertThat(response.role()).isEqualTo("USER");
   }
