@@ -1,15 +1,19 @@
 package com.onepiecerpg.api.service;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.onepiecerpg.api.dto.ConnexionRequest;
 import com.onepiecerpg.api.dto.ConnexionResponse;
 import com.onepiecerpg.api.dto.InscriptionRequest;
+import com.onepiecerpg.api.dto.UtilisateurResponseDto;
 import com.onepiecerpg.api.entity.Utilisateur;
 import com.onepiecerpg.api.repository.UtilisateurRepository;
 
@@ -35,6 +39,11 @@ class UtilisateurServiceTest {
       passwordEncoder,
       jwtService
     );
+  }
+
+  @AfterEach
+  void tearDown() {
+    SecurityContextHolder.clearContext();
   }
 
   @Test
@@ -158,5 +167,43 @@ class UtilisateurServiceTest {
     assertThatThrownBy(() -> utilisateurService.connecterUtilisateur(request))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Email ou mot de passe incorrect");
+  }
+
+  @Test
+  @DisplayName("Doit récupérer les informations de l'utilisateur connecté")
+  void shouldGetConnectedUser() {
+    SecurityContextHolder.getContext().setAuthentication(
+      new UsernamePasswordAuthenticationToken("test@test.com", null)
+    );
+
+    Utilisateur utilisateur = new Utilisateur();
+    utilisateur.setId(1L);
+    utilisateur.setPseudo("testuser");
+    utilisateur.setEmail("test@test.com");
+    utilisateur.setRole("USER");
+
+    when(utilisateurRepository.findByEmail("test@test.com")).thenReturn(Optional.of(utilisateur));
+
+    UtilisateurResponseDto response = utilisateurService.recupererUtilisateurConnecte();
+
+    assertThat(response.id()).isEqualTo(1L);
+    assertThat(response.pseudo()).isEqualTo("testuser");
+    assertThat(response.email()).isEqualTo("test@test.com");
+    assertThat(response.role()).isEqualTo("USER");
+  }
+
+  @Test
+  @DisplayName("Doit refuser la récupération de l'utilisateur connecté si l'email n'est pas trouvé")
+  void shouldRejectGetConnectedUserWithUnknownEmail() {
+    SecurityContextHolder.getContext().setAuthentication(
+      new UsernamePasswordAuthenticationToken("unknown@test.com", null)
+    );
+
+    when(utilisateurRepository.findByEmail("unknown@test.com")).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> utilisateurService.recupererUtilisateurConnecte())
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Utilisateur connecté introuvable");
+
   }
 }

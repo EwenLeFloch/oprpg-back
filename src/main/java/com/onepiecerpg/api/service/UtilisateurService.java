@@ -3,8 +3,11 @@ package com.onepiecerpg.api.service;
 import com.onepiecerpg.api.dto.ConnexionRequest;
 import com.onepiecerpg.api.dto.ConnexionResponse;
 import com.onepiecerpg.api.dto.InscriptionRequest;
+import com.onepiecerpg.api.dto.UtilisateurResponseDto;
 import com.onepiecerpg.api.entity.Utilisateur;
 import com.onepiecerpg.api.repository.UtilisateurRepository;
+
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -54,6 +57,18 @@ public class UtilisateurService {
         utilisateur.getRole()
     );
   }
-}
 
+  public UtilisateurResponseDto recupererUtilisateurConnecte() {
+    String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+    Utilisateur utilisateur = utilisateurRepository.findByEmail(email)
+        .orElseThrow(() -> new IllegalArgumentException("Utilisateur connecté introuvable"));
+    return new UtilisateurResponseDto(
+        utilisateur.getId(),
+        utilisateur.getPseudo(),
+        utilisateur.getEmail(),
+        utilisateur.getRole()
+    );
+  }
+}
 

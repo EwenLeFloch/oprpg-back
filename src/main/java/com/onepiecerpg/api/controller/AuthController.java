@@ -3,9 +3,9 @@ package com.onepiecerpg.api.controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import com.onepiecerpg.api.dto.ConnexionRequest;
 import com.onepiecerpg.api.dto.ConnexionResponse;
@@ -26,17 +26,17 @@ public class AuthController {
   }
 
   @PostMapping("/inscription")
-  @ResponseStatus(HttpStatus.CREATED)
-  public Utilisateur inscription(
+  public ResponseEntity<Utilisateur> inscription(
     @Valid @RequestBody InscriptionRequest request
   ) {
-    return utilisateurService.creerUtilisateur(request);
+    Utilisateur utilisateur = utilisateurService.creerUtilisateur(request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(utilisateur);
   }
 
   @PostMapping("/connexion")
-  public ConnexionResponse connexion(
+  public ResponseEntity<ConnexionResponse> connexion(
     @Valid @RequestBody ConnexionRequest request
   ) {
-    return utilisateurService.connecterUtilisateur(request);
+    return ResponseEntity.ok(utilisateurService.connecterUtilisateur(request));
   }
 }

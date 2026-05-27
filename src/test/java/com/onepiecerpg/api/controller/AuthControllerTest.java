@@ -9,6 +9,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -16,9 +18,16 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.onepiecerpg.api.dto.ConnexionResponse;
 import com.onepiecerpg.api.entity.Utilisateur;
+import com.onepiecerpg.api.security.JwtAuthenticationFilter;
+import com.onepiecerpg.api.service.JwtService;
 import com.onepiecerpg.api.service.UtilisateurService;
 
-@WebMvcTest(AuthController.class)
+@WebMvcTest(controllers = AuthController.class,
+  excludeAutoConfiguration = {
+    SecurityAutoConfiguration.class,
+    SecurityFilterAutoConfiguration.class
+  }
+)
 @AutoConfigureMockMvc(addFilters = false)
 class AuthControllerTest {
   @Autowired
@@ -26,6 +35,12 @@ class AuthControllerTest {
 
   @MockitoBean
   private UtilisateurService utilisateurService;
+
+  @MockitoBean
+  private JwtService jwtService;
+
+  @MockitoBean
+  private JwtAuthenticationFilter jwtAuthenticationFilter;
 
   @Test
   @DisplayName("Doit retourner 201 lors d'une inscription valide")
@@ -104,7 +119,7 @@ class AuthControllerTest {
     String body = """
         {
           "email": "email-invalide",
-          "motDePasse": "",
+          "motDePasse": ""
         }
         """;
 
