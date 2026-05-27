@@ -11,6 +11,7 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 
 @Configuration
 public class OpenApiConfig {
+  private String bearerAuth = "bearerAuth";
   
   @Bean
   public OpenAPI customOpenAPI() {
@@ -19,10 +20,10 @@ public class OpenApiConfig {
         .title("One Piece RPG API")
         .version("1.0")
         .description("Documentation de l'API pour le projet One Piece RPG"))
-      .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
+      .addSecurityItem(new SecurityRequirement().addList(bearerAuth))
       .components(new Components()
-        .addSecuritySchemes("bearerAuth", new SecurityScheme()
-          .name("bearerAuth")
+        .addSecuritySchemes(bearerAuth, new SecurityScheme()
+          .name(bearerAuth)
           .type(SecurityScheme.Type.HTTP)
           .scheme("bearer")
           .bearerFormat("JWT")
