@@ -2,17 +2,22 @@ package com.onepiecerpg.api.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.onepiecerpg.api.entity.Utilisateur;
 
-@SpringBootTest(properties = {
-    "jwt.secret=monSecret",
-    "jwt.expiration=3600000"
-})
 class JwtServiceTest {
   private JwtService jwtService;
+
+  @BeforeEach
+  void setUp() {
+    jwtService = new JwtService();
+
+    ReflectionTestUtils.setField(jwtService, "secret", "0123456789012345678901234567890101234567890123456789012345678901");
+    ReflectionTestUtils.setField(jwtService, "expiration", 3600000L);
+  }
 
   @Test
   void genererToken_shouldCreateValidToken() {
