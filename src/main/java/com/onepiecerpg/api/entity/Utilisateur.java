@@ -1,5 +1,7 @@
 package com.onepiecerpg.api.entity;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,4 +26,7 @@ public class Utilisateur {
 
     @Column(nullable = false)
     private String role = "USER";
+
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime dateCreation = LocalDateTime.now();
 }

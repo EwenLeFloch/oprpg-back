@@ -16,11 +16,13 @@ public class UtilisateurService {
   private final UtilisateurRepository utilisateurRepository;
   private final PasswordEncoder passwordEncoder;
   private final JwtService jwtService;
+  private final ProgressionJoueurService progressionJoueurService;
 
-  public UtilisateurService(UtilisateurRepository utilisateurRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+  public UtilisateurService(UtilisateurRepository utilisateurRepository, PasswordEncoder passwordEncoder, JwtService jwtService, ProgressionJoueurService progressionJoueurService) {
     this.utilisateurRepository = utilisateurRepository;
     this.passwordEncoder = passwordEncoder;
     this.jwtService = jwtService;
+    this.progressionJoueurService = progressionJoueurService;
   }
 
   public Utilisateur creerUtilisateur(InscriptionRequest request) {
@@ -36,7 +38,10 @@ public class UtilisateurService {
     utilisateur.setMotDePasseHash(passwordEncoder.encode(request.getMotDePasse()));
     utilisateur.setRole("USER");
 
-    return utilisateurRepository.save(utilisateur);
+    Utilisateur utilisateurSauvegarde = utilisateurRepository.save(utilisateur);
+    progressionJoueurService.creerProgressionInitiale(utilisateurSauvegarde);
+
+    return utilisateurSauvegarde;
   }
 
   public ConnexionResponse connecterUtilisateur(ConnexionRequest request) {

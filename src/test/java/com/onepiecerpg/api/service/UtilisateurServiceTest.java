@@ -27,17 +27,20 @@ class UtilisateurServiceTest {
   private UtilisateurService utilisateurService;
   private PasswordEncoder passwordEncoder;
   private JwtService jwtService;
+  private ProgressionJoueurService progressionJoueurService;
 
   @BeforeEach
   void setUp() {
     utilisateurRepository = mock(UtilisateurRepository.class);
     passwordEncoder = new BCryptPasswordEncoder();
     jwtService = mock(JwtService.class);
+    progressionJoueurService = mock(ProgressionJoueurService.class);
 
     utilisateurService = new UtilisateurService(
       utilisateurRepository,
       passwordEncoder,
-      jwtService
+      jwtService,
+      progressionJoueurService
     );
   }
 
@@ -56,12 +59,14 @@ class UtilisateurServiceTest {
 
     when(utilisateurRepository.findByEmail(request.getEmail())).thenReturn(Optional.empty());
     when(utilisateurRepository.findByPseudo(request.getPseudo())).thenReturn(Optional.empty());
-
+    when(utilisateurRepository.save(any(Utilisateur.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    
     utilisateurService.creerUtilisateur(request);
 
     ArgumentCaptor<Utilisateur> captor = ArgumentCaptor.forClass(Utilisateur.class);
 
     verify(utilisateurRepository).save(captor.capture());
+    verify(progressionJoueurService).creerProgressionInitiale(any(Utilisateur.class));
     Utilisateur utilisateurSauvegarde = captor.getValue();
 
     assertThat(utilisateurSauvegarde.getPseudo()).isEqualTo("testuser");
