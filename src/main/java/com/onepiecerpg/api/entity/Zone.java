@@ -18,9 +18,6 @@ public class Zone {
     @Column(nullable = false)
     private String nom;
 
-    @Column()
-    private String description;
-
     @Min(1)
     @Column(nullable = false)
     private int niveauRequis = 1;
