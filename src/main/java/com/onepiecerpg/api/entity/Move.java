@@ -16,7 +16,7 @@ public class Move {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    String nom;
+    private String nom;
 
     @Column(length = 254)
     private String description;

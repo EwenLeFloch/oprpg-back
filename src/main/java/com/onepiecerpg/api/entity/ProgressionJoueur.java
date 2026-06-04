@@ -60,6 +60,10 @@ public class ProgressionJoueur {
     @JoinColumn(name = "personnage_id", nullable = false)
     private Personnage personnage;
 
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "zone_id", nullable = false)
+    private Zone zone;
+
     @ManyToOne
     @JoinColumn(name = "faction_id")
     private Faction faction;
