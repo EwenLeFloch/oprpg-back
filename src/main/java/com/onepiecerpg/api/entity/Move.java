@@ -25,9 +25,13 @@ public class Move {
     @Column(nullable = false)
     private TypeMove typeMove;
 
-    @PositiveOrZero
+    @Min(1)
     @Column(nullable = false)
-    private int valeurMove;
+    private int valeurMin;
+
+    @Min(1)
+    @Column(nullable = false)
+    private int valeurMax;
 
     @Min(1)
     @Column(nullable = false)

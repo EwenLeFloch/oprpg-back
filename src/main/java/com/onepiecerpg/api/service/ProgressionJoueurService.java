@@ -44,36 +44,35 @@ public class ProgressionJoueurService {
     }
 
     public ProgressionJoueurResponse getProgressionConnectee() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-
-        Utilisateur utilisateur = utilisateurRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
-
-        ProgressionJoueur progression = progressionJoueurRepository.findByUtilisateur(utilisateur)
-                .orElseThrow(() -> new RuntimeException("Progression du joueur non trouvée"));
-                
+        ProgressionJoueur progression = recupererProgressionConnectee();
         return convertirEnResponse(progression);
 
     }
 
     public ProgressionJoueurResponse choisirFaction(Long factionId) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        Utilisateur utilisateur = utilisateurRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
-        
-        ProgressionJoueur progression = progressionJoueurRepository.findByUtilisateur(utilisateur)
-                .orElseThrow(() -> new RuntimeException("Progression du joueur non trouvée"));
+        ProgressionJoueur progression = recupererProgressionConnectee();
                 
         if (progression.getFaction() != null) {
             throw new IllegalStateException("La faction a déjà été choisie");
         }
 
-        Faction faction = factionRepository.findById(progression.getFaction().getId())
+        Faction faction = factionRepository.findById(factionId)
                 .orElseThrow(() -> new RuntimeException("Faction non trouvée"));
 
         progression.setFaction(faction);
+
         return convertirEnResponse(progressionJoueurRepository.save(progression));        
+    }
+
+    private ProgressionJoueur recupererProgressionConnectee() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        Utilisateur utilisateur = utilisateurRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+            
+        return progressionJoueurRepository.findByUtilisateur(utilisateur)
+            .orElseThrow(() -> new RuntimeException("Progression du joueur non trouvée"));
     }
 
     private ProgressionJoueurResponse convertirEnResponse(ProgressionJoueur progression) {
