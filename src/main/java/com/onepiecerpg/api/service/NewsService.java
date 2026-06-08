@@ -1,7 +1,7 @@
 package com.onepiecerpg.api.service;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -16,9 +16,11 @@ import com.onepiecerpg.api.repository.NewsRepository;
 public class NewsService {
 
     private final NewsRepository newsRepository;
+    private final Clock clock;
 
-    public NewsService(NewsRepository newsRepository) {
+    public NewsService(NewsRepository newsRepository, Clock clock) {
         this.newsRepository = newsRepository;
+        this.clock = clock;
     }
 
     public List<NewsResponse> recupererToutesLesNews() {
@@ -36,7 +38,7 @@ public class NewsService {
         News news = new News();
         news.setTitre(request.titre());
         news.setContenu(request.contenu());
-        news.setDateCreation(LocalDateTime.now(ZoneId.of("Europe/Paris")));
+        news.setDateCreation(LocalDateTime.now(clock));
 
         return NewsResponse.from(newsRepository.save(news));
     }

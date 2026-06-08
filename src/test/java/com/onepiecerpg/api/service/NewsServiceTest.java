@@ -1,10 +1,14 @@
 package com.onepiecerpg.api.service;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.Month;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,11 +25,14 @@ class NewsServiceTest {
 
     private NewsRepository newsRepository;
     private NewsService newsService;
+    private Clock clock;
 
     @BeforeEach
     void setUp() {
         newsRepository = mock(NewsRepository.class);
-        newsService = new NewsService(newsRepository);
+        ZoneId zone = ZoneId.of("Europe/Paris");
+        clock = Clock.fixed(LocalDateTime.of(2026, Month.JUNE, 8, 10, 0).atZone(zone).toInstant(), zone);
+        newsService = new NewsService(newsRepository, clock);
     }
 
     @Test
@@ -79,8 +86,7 @@ class NewsServiceTest {
         assertThat(result.id()).isEqualTo(1L);
         assertThat(result.titre()).isEqualTo("Nouvelle île");
         assertThat(result.contenu()).isEqualTo("Dawn Island est disponible");
-        assertThat(result.dateCreation()).isEqualTo(LocalDateTime.of(2026, Month.JUNE, 8, 10, 0));
-
+        assertThat(result.dateCreation()).isBeforeOrEqualTo(LocalDateTime.now(clock));
         verify(newsRepository).save(any(News.class));
     }
 

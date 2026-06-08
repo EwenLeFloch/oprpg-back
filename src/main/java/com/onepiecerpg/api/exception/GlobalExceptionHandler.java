@@ -1,7 +1,7 @@
 package com.onepiecerpg.api.exception;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,6 +16,12 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+        private final Clock clock;
+
+    public GlobalExceptionHandler(Clock clock) {
+        this.clock = clock;
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorResponse> handleValidationException(
@@ -67,28 +73,12 @@ public class GlobalExceptionHandler {
             RessourceIntrouvableException exception,
             HttpServletRequest request
     ) {
-        HttpStatus status = isNotFound(exception.getMessage())
-                ? HttpStatus.NOT_FOUND
-                : HttpStatus.BAD_REQUEST;
-
         return buildResponse(
-                status,
-                exception.getMessage(),
-                request.getRequestURI(),
-                null
-        );
-    }
-
-    private boolean isNotFound(String message) {
-        if (message == null) {
-            return false;
-        }
-
-        String lowerMessage = message.toLowerCase();
-
-        return lowerMessage.contains("introuvable")
-                || lowerMessage.contains("non trouvé")
-                || lowerMessage.contains("non trouvée");
+        HttpStatus.NOT_FOUND,
+        exception.getMessage(),
+        request.getRequestURI(),
+        null
+);
     }
 
     private ResponseEntity<ApiErrorResponse> buildResponse(
@@ -98,7 +88,7 @@ public class GlobalExceptionHandler {
             Map<String, String> validationErrors
     ) {
         ApiErrorResponse response = new ApiErrorResponse(
-                LocalDateTime.now(ZoneId.of("Europe/Paris")),
+                LocalDateTime.now(clock),
                 status.value(),
                 status.getReasonPhrase(),
                 message,

@@ -19,6 +19,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.Clock;
+
 @WebMvcTest(
   controllers = UtilisateurController.class,
   excludeAutoConfiguration = {
@@ -38,6 +40,9 @@ class UtilisateurControllerTest {
 
   @MockitoBean
   private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+  @MockitoBean
+  private Clock clock;
 
   @Test
   @DisplayName("Doit retourner les informations de l'utilisateur connecté")

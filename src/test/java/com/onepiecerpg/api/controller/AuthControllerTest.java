@@ -22,6 +22,8 @@ import com.onepiecerpg.api.security.JwtAuthenticationFilter;
 import com.onepiecerpg.api.service.JwtService;
 import com.onepiecerpg.api.service.UtilisateurService;
 
+import java.time.Clock;
+
 @WebMvcTest(controllers = AuthController.class,
   excludeAutoConfiguration = {
     SecurityAutoConfiguration.class,
@@ -41,6 +43,9 @@ class AuthControllerTest {
 
   @MockitoBean
   private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+  @MockitoBean
+  private Clock clock;
 
   @Test
   @DisplayName("Doit retourner 201 lors d'une inscription valide")
