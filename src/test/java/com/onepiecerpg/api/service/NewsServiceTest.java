@@ -9,6 +9,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.onepiecerpg.api.dto.NewsResponse;
 import com.onepiecerpg.api.entity.News;
 import com.onepiecerpg.api.repository.NewsRepository;
 
@@ -29,7 +30,7 @@ class NewsServiceTest {
 
         when(newsRepository.findAll()).thenReturn(List.of(news));
 
-        List<News> result = newsService.recupererToutesLesNews();
+        List<NewsResponse> result = newsService.recupererToutesLesNews();
 
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().getTitre()).isEqualTo("Bienvenue");

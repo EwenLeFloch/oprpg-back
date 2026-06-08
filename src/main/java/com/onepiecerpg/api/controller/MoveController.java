@@ -22,10 +22,10 @@ public class MoveController {
     @GetMapping
     public ResponseEntity<List<MoveResponse>> recupererTousLesMoves() {
         return ResponseEntity.ok(
-                moveService.recupererTousLesMoves()
-                        .stream()
-                        .map(MoveResponse::from)
-                        .toList()
+            moveService.recupererTousLesMoves()
+                .stream()
+                .map(MoveResponse::from)
+                .toList()
         );
     }
 
@@ -37,10 +37,10 @@ public class MoveController {
     @GetMapping("/type/{typeMove}")
     public ResponseEntity<List<MoveResponse>> recupererMovesParType(@PathVariable TypeMove typeMove) {
         return ResponseEntity.ok(
-                moveService.recupererMovesParType(typeMove)
-                        .stream()
-                        .map(MoveResponse::from)
-                        .toList()
+            moveService.recupererMovesParType(typeMove)
+                .stream()
+                .map(MoveResponse::from)
+                .toList()
         );
     }
 }

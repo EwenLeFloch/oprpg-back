@@ -18,7 +18,7 @@ public class Ile {
     private String nom;
 
     @Column(nullable = false, unique = true)
-    private String image_path;
+    private String imagePath;
 
     @Column()
     private String description;

@@ -75,7 +75,7 @@ class ProgressionJoueurRepositoryTest {
     private Ile ile() {
         Ile ile = new Ile();
         ile.setNom("Dawn Island");
-        ile.setImage_path("/images/dawn-island.png");
+        ile.setImagePath("/images/dawn-island.png");
         ile.setDescription("Île de départ");
         ile.setNiveauRequis(1);
         return ile;

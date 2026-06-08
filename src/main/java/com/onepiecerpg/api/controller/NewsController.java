@@ -39,8 +39,8 @@ public class NewsController {
 
     @PutMapping("/{newsId}")
     public ResponseEntity<NewsResponse> modifierNews(
-            @PathVariable Long newsId,
-            @Valid @RequestBody NewsRequest request
+        @PathVariable Long newsId,
+        @Valid @RequestBody NewsRequest request
     ) {
         return ResponseEntity.ok(newsService.modifierNews(newsId, request));
     }

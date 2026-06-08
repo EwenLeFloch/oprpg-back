@@ -13,7 +13,7 @@ public record IleResponse(
         return new IleResponse(
                 ile.getId(),
                 ile.getNom(),
-                ile.getImage_path(),
+                ile.getImagePath(),
                 ile.getDescription(),
                 ile.getNiveauRequis()
         );

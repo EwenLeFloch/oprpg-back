@@ -1,6 +1,7 @@
 package com.onepiecerpg.api.exception;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -97,7 +98,7 @@ public class GlobalExceptionHandler {
             Map<String, String> validationErrors
     ) {
         ApiErrorResponse response = new ApiErrorResponse(
-                LocalDateTime.now(),
+                LocalDateTime.now(ZoneId.of("Europe/Paris")),
                 status.value(),
                 status.getReasonPhrase(),
                 message,
