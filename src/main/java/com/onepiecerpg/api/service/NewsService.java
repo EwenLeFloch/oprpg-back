@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.onepiecerpg.api.dto.NewsRequest;
+import com.onepiecerpg.api.dto.NewsResponse;
 import com.onepiecerpg.api.entity.News;
 import com.onepiecerpg.api.repository.NewsRepository;
 
@@ -16,26 +18,32 @@ public class NewsService {
         this.newsRepository = newsRepository;
     }
 
-    public List<News> recupererToutesLesNews() {
-        return newsRepository.findAll();
+    public List<NewsResponse> recupererToutesLesNews() {
+        return newsRepository.findAll()
+                .stream()
+                .map(NewsResponse::from)
+                .toList();
     }
 
-    public News recupererNewsParId(Long newsId) {
-        return newsRepository.findById(newsId)
-                .orElseThrow(() -> new RuntimeException("News introuvable"));
+    public NewsResponse recupererNewsParId(Long newsId) {
+        return NewsResponse.from(recupererNews(newsId));
     }
 
-    public News creerNews(News news) {
-        return newsRepository.save(news);
+    public NewsResponse creerNews(NewsRequest request) {
+        News news = new News();
+        news.setTitre(request.titre());
+        news.setContenu(request.contenu());
+
+        return NewsResponse.from(newsRepository.save(news));
     }
 
-    public News modifierNews(Long newsId, News newsModifiee) {
-        News news = recupererNewsParId(newsId);
+    public NewsResponse modifierNews(Long newsId, NewsRequest request) {
+        News news = recupererNews(newsId);
 
-        news.setTitre(newsModifiee.getTitre());
-        news.setContenu(newsModifiee.getContenu());
+        news.setTitre(request.titre());
+        news.setContenu(request.contenu());
 
-        return newsRepository.save(news);
+        return NewsResponse.from(newsRepository.save(news));
     }
 
     public void supprimerNews(Long newsId) {
@@ -44,5 +52,10 @@ public class NewsService {
         }
 
         newsRepository.deleteById(newsId);
+    }
+
+    private News recupererNews(Long newsId) {
+        return newsRepository.findById(newsId)
+                .orElseThrow(() -> new RuntimeException("News introuvable"));
     }
 }

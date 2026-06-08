@@ -17,6 +17,7 @@ import com.onepiecerpg.api.dto.UtilisateurResponseDto;
 import com.onepiecerpg.api.entity.Utilisateur;
 import com.onepiecerpg.api.repository.UtilisateurRepository;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -61,7 +62,7 @@ class UtilisateurServiceTest {
     when(utilisateurRepository.findByPseudo(request.getPseudo())).thenReturn(Optional.empty());
     when(utilisateurRepository.save(any(Utilisateur.class))).thenAnswer(invocation -> invocation.getArgument(0));
     
-    utilisateurService.creerUtilisateur(request);
+    UtilisateurResponseDto response = utilisateurService.creerUtilisateur(request);
 
     ArgumentCaptor<Utilisateur> captor = ArgumentCaptor.forClass(Utilisateur.class);
 
@@ -69,8 +70,9 @@ class UtilisateurServiceTest {
     verify(progressionJoueurService).creerProgressionInitiale(any(Utilisateur.class));
     Utilisateur utilisateurSauvegarde = captor.getValue();
 
-    assertThat(utilisateurSauvegarde.getPseudo()).isEqualTo("testuser");
-    assertThat(utilisateurSauvegarde.getEmail()).isEqualTo("test@test.com");
+    assertThat(response.pseudo()).isEqualTo("testuser");
+    assertThat(response.email()).isEqualTo("test@test.com");
+    assertThat(response.role()).isEqualTo("USER");
     assertThat(passwordEncoder.matches("Password123", utilisateurSauvegarde.getMotDePasseHash())).isTrue();
   }
 

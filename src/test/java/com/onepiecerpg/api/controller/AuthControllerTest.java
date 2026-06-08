@@ -17,7 +17,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.onepiecerpg.api.dto.ConnexionResponse;
-import com.onepiecerpg.api.entity.Utilisateur;
+import com.onepiecerpg.api.dto.UtilisateurResponseDto;
 import com.onepiecerpg.api.security.JwtAuthenticationFilter;
 import com.onepiecerpg.api.service.JwtService;
 import com.onepiecerpg.api.service.UtilisateurService;
@@ -45,30 +45,31 @@ class AuthControllerTest {
   @Test
   @DisplayName("Doit retourner 201 lors d'une inscription valide")
   void shouldRegisterUser() throws Exception {
+      UtilisateurResponseDto utilisateur = new UtilisateurResponseDto(
+              1L,
+              "testuser",
+              "test@test.com",
+              "USER"
+      );
 
-    Utilisateur utilisateur = new Utilisateur();
-    utilisateur.setId(1L);
-    utilisateur.setPseudo("testuser");
-    utilisateur.setEmail("test@test.com");
-    utilisateur.setMotDePasseHash("hashedpassword");
-    utilisateur.setRole("USER");
+      when(utilisateurService.creerUtilisateur(ArgumentMatchers.any())).thenReturn(utilisateur);
 
-    when(utilisateurService.creerUtilisateur(ArgumentMatchers.any())).thenReturn(utilisateur);
+      String body = """
+          {
+            "pseudo": "testuser",
+            "email": "test@test.com",
+            "motDePasse": "Password123"
+          }
+          """;
 
-    String body = """
-        {
-          "pseudo": "testuser",
-          "email": "test@test.com",
-          "motDePasse": "Password123"
-        }
-        """;
-
-    mockMvc.perform(post("/api/auth/inscription")
-        .contentType("application/json")
-        .content(body))
-        .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.pseudo").value("testuser"))
-        .andExpect(jsonPath("$.email").value("test@test.com"));
+      mockMvc.perform(post("/api/auth/inscription")
+              .contentType("application/json")
+              .content(body))
+              .andExpect(status().isCreated())
+              .andExpect(jsonPath("$.pseudo").value("testuser"))
+              .andExpect(jsonPath("$.email").value("test@test.com"))
+              .andExpect(jsonPath("$.role").value("USER"))
+              .andExpect(jsonPath("$.motDePasseHash").doesNotExist());
   }
 
   @Test
