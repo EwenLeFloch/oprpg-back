@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.onepiecerpg.api.entity.Faction;
+import com.onepiecerpg.api.exception.RessourceIntrouvableException;
 import com.onepiecerpg.api.repository.FactionRepository;
 
 @Service
@@ -21,11 +22,11 @@ public class FactionService {
 
     public Faction recupererFactionParId(Long id) {
         return factionRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Faction non trouvée"));
+            .orElseThrow(() -> new RessourceIntrouvableException("Faction non trouvée"));
     }
 
     public Faction recupererFactionParNom(String nom) {
         return factionRepository.findByNom(nom)
-            .orElseThrow(() -> new RuntimeException("Faction non trouvée"));
+            .orElseThrow(() -> new RessourceIntrouvableException("Faction non trouvée"));
     }
 }

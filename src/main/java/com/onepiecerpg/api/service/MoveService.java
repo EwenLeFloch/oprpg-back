@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.onepiecerpg.api.entity.Move;
 import com.onepiecerpg.api.entity.TypeMove;
+import com.onepiecerpg.api.exception.RessourceIntrouvableException;
 import com.onepiecerpg.api.repository.MoveRepository;
 
 @Service
@@ -23,12 +24,12 @@ public class MoveService {
 
     public Move recupererMoveParId(Long moveId) {
         return moveRepository.findById(moveId)
-                .orElseThrow(() -> new RuntimeException("Move introuvable"));
+                .orElseThrow(() -> new RessourceIntrouvableException("Move introuvable"));
     }
 
     public Move recupererMoveParNom(String nom) {
         return moveRepository.findByNom(nom)
-                .orElseThrow(() -> new RuntimeException("Move introuvable"));
+                .orElseThrow(() -> new RessourceIntrouvableException("Move introuvable"));
     }
 
     public List<Move> recupererMovesParType(TypeMove typeMove) {

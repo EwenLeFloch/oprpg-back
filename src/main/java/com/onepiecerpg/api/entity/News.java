@@ -20,5 +20,5 @@ public class News {
     @Column(length = 5000)
     private String contenu;
 
-    private LocalDateTime dateCreation = LocalDateTime.now();
+    private LocalDateTime dateCreation;
 }

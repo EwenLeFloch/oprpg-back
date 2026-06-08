@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import com.onepiecerpg.api.entity.Move;
 import com.onepiecerpg.api.entity.TypeMove;
+import com.onepiecerpg.api.exception.RessourceIntrouvableException;
 import com.onepiecerpg.api.repository.MoveRepository;
 
 class MoveServiceTest {
@@ -54,7 +55,7 @@ class MoveServiceTest {
         when(moveRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> moveService.recupererMoveParId(1L))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(RessourceIntrouvableException.class)
                 .hasMessage("Move introuvable");
     }
 }

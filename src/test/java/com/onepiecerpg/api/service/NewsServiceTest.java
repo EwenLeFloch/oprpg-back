@@ -3,14 +3,18 @@ package com.onepiecerpg.api.service;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.onepiecerpg.api.dto.NewsRequest;
 import com.onepiecerpg.api.dto.NewsResponse;
 import com.onepiecerpg.api.entity.News;
+import com.onepiecerpg.api.exception.RessourceIntrouvableException;
 import com.onepiecerpg.api.repository.NewsRepository;
 
 class NewsServiceTest {
@@ -33,7 +37,7 @@ class NewsServiceTest {
         List<NewsResponse> result = newsService.recupererToutesLesNews();
 
         assertThat(result).hasSize(1);
-        assertThat(result.getFirst().getTitre()).isEqualTo("Bienvenue");
+        assertThat(result.getFirst().titre()).isEqualTo("Bienvenue");
     }
 
     @Test
@@ -42,10 +46,10 @@ class NewsServiceTest {
 
         when(newsRepository.findById(1L)).thenReturn(Optional.of(news));
 
-        News result = newsService.recupererNewsParId(1L);
+        NewsResponse result = newsService.recupererNewsParId(1L);
 
-        assertThat(result.getTitre()).isEqualTo("Patch note");
-        assertThat(result.getContenu()).isEqualTo("Ajout du système de combat");
+        assertThat(result.titre()).isEqualTo("Patch note");
+        assertThat(result.contenu()).isEqualTo("Ajout du système de combat");
     }
 
     @Test
@@ -53,46 +57,63 @@ class NewsServiceTest {
         when(newsRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> newsService.recupererNewsParId(1L))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(RessourceIntrouvableException.class)
                 .hasMessage("News introuvable");
     }
 
     @Test
     void shouldCreateNews() {
-        News news = news("Nouvelle île", "Dawn Island est disponible");
+        NewsRequest request = new NewsRequest(
+                "Nouvelle île",
+                "Dawn Island est disponible"
+        );
 
-        when(newsRepository.save(news)).thenReturn(news);
+        when(newsRepository.save(any(News.class))).thenAnswer(invocation -> {
+            News news = invocation.getArgument(0);
+            news.setId(1L);
+            return news;
+        });
 
-        News result = newsService.creerNews(news);
+        NewsResponse result = newsService.creerNews(request);
 
-        assertThat(result.getTitre()).isEqualTo("Nouvelle île");
-        verify(newsRepository).save(news);
+        assertThat(result.id()).isEqualTo(1L);
+        assertThat(result.titre()).isEqualTo("Nouvelle île");
+        assertThat(result.contenu()).isEqualTo("Dawn Island est disponible");
+        assertThat(result.dateCreation()).isEqualTo(LocalDateTime.of(2026, Month.JUNE, 8, 10, 0));
+
+        verify(newsRepository).save(any(News.class));
     }
 
     @Test
     void shouldUpdateNews() {
         News existingNews = news("Ancien titre", "Ancien contenu");
-        News updatedNews = news("Nouveau titre", "Nouveau contenu");
+        NewsRequest request = new NewsRequest(
+                "Nouveau titre",
+                "Nouveau contenu"
+        );
 
         when(newsRepository.findById(1L)).thenReturn(Optional.of(existingNews));
         when(newsRepository.save(existingNews)).thenReturn(existingNews);
 
-        News result = newsService.modifierNews(1L, updatedNews);
+        NewsResponse result = newsService.modifierNews(1L, request);
 
-        assertThat(result.getTitre()).isEqualTo("Nouveau titre");
-        assertThat(result.getContenu()).isEqualTo("Nouveau contenu");
+        assertThat(result.titre()).isEqualTo("Nouveau titre");
+        assertThat(result.contenu()).isEqualTo("Nouveau contenu");
 
         verify(newsRepository).save(existingNews);
     }
 
     @Test
     void shouldThrowWhenUpdatingUnknownNews() {
-        News updatedNews = news("Nouveau titre", "Nouveau contenu");
+        NewsRequest request = new NewsRequest(
+                "Nouveau titre",
+                "Nouveau contenu"
+        );
 
         when(newsRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> newsService.modifierNews(1L, updatedNews))
-                .isInstanceOf(RuntimeException.class)
+        assertThatThrownBy(() -> newsService.modifierNews(1L, request))
+                .isInstanceOf(RessourceIntrouvableException.class)
                 .hasMessage("News introuvable");
 
         verify(newsRepository, never()).save(any());
@@ -112,7 +133,7 @@ class NewsServiceTest {
         when(newsRepository.existsById(1L)).thenReturn(false);
 
         assertThatThrownBy(() -> newsService.supprimerNews(1L))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(RessourceIntrouvableException.class)
                 .hasMessage("News introuvable");
 
         verify(newsRepository, never()).deleteById(anyLong());
@@ -123,6 +144,7 @@ class NewsServiceTest {
         news.setId(1L);
         news.setTitre(titre);
         news.setContenu(contenu);
+        news.setDateCreation(LocalDateTime.of(2026, Month.JUNE, 8, 10, 0));
         return news;
     }
 }

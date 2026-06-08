@@ -22,6 +22,8 @@ import jakarta.servlet.http.HttpServletResponse;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private static final String NEWS_API_PATTERN = "/api/news/**";
+    private static final String ROLE_ADMIN = "ADMIN";
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
@@ -54,11 +56,11 @@ public class SecurityConfig {
                                 "/v3/api-docs/**"
                         ).permitAll()
 
-                        .requestMatchers(HttpMethod.GET, "/api/news/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, NEWS_API_PATTERN).permitAll()
 
-                        .requestMatchers(HttpMethod.POST, "/api/news/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/news/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/news/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, NEWS_API_PATTERN).hasRole(ROLE_ADMIN)
+                        .requestMatchers(HttpMethod.PUT, NEWS_API_PATTERN).hasRole(ROLE_ADMIN)
+                        .requestMatchers(HttpMethod.DELETE, NEWS_API_PATTERN).hasRole(ROLE_ADMIN)
 
                         .anyRequest().authenticated()
                 )

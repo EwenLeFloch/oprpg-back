@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import com.onepiecerpg.api.entity.Ile;
 import com.onepiecerpg.api.entity.Zone;
+import com.onepiecerpg.api.exception.RessourceIntrouvableException;
 import com.onepiecerpg.api.repository.IleRepository;
 import com.onepiecerpg.api.repository.ZoneRepository;
 
@@ -58,7 +59,7 @@ class MondeServiceTest {
         when(ileRepository.existsById(1L)).thenReturn(false);
 
         assertThatThrownBy(() -> mondeService.recupererZonesParIle(1L))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(RessourceIntrouvableException.class)
                 .hasMessage("Île non trouvée");
     }
 

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.onepiecerpg.api.entity.Ile;
 import com.onepiecerpg.api.entity.Zone;
+import com.onepiecerpg.api.exception.RessourceIntrouvableException;
 import com.onepiecerpg.api.repository.IleRepository;
 import com.onepiecerpg.api.repository.ZoneRepository;
 
@@ -26,12 +27,12 @@ public class MondeService {
     
     public Ile recupererIleParId(Long ileId) {
         return ileRepository.findById(ileId)
-                .orElseThrow(() -> new RuntimeException("Île non trouvée"));
+                .orElseThrow(() -> new RessourceIntrouvableException("Île non trouvée"));
     }
 
     public List<Zone> recupererZonesParIle(Long ileId) {
         if (!ileRepository.existsById(ileId)) {
-            throw new RuntimeException("Île non trouvée");
+            throw new RessourceIntrouvableException("Île non trouvée");
         }
 
         return zoneRepository.findByIleId(ileId);
@@ -39,7 +40,7 @@ public class MondeService {
 
     public Zone recupererZoneParId(Long zoneId) {
         return zoneRepository.findById(zoneId)
-                .orElseThrow(() -> new RuntimeException("Zone non trouvée"));
+                .orElseThrow(() -> new RessourceIntrouvableException("Zone non trouvée"));
     }
 
     public boolean joueurPeutAccederZone(int niveauJoueur, Zone zone) {

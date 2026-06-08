@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.onepiecerpg.api.entity.Zone;
+import com.onepiecerpg.api.exception.RessourceIntrouvableException;
 import com.onepiecerpg.api.repository.IleRepository;
 import com.onepiecerpg.api.repository.ZoneRepository;
 
@@ -28,17 +29,17 @@ public class ZoneService {
 
     public Zone recupererZoneParId(Long zoneId) {
         return zoneRepository.findById(zoneId)
-            .orElseThrow(() -> new RuntimeException("Zone introuvable"));
+            .orElseThrow(() -> new RessourceIntrouvableException("Zone introuvable"));
     }
 
     public Zone recupererZoneParNom(String nom) {
         return zoneRepository.findByNom(nom)
-            .orElseThrow(() -> new RuntimeException("Zone introuvable"));
+            .orElseThrow(() -> new RessourceIntrouvableException("Zone introuvable"));
     }
 
     public List<Zone> recupererZonesParIle(Long ileId) {
         if (!ileRepository.existsById(ileId)) {
-            throw new RuntimeException("Île introuvable");
+            throw new RessourceIntrouvableException("Île introuvable");
         }
 
         return zoneRepository.findByIleId(ileId);

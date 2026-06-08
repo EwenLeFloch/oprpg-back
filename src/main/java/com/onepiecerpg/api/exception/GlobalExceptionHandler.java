@@ -62,9 +62,9 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ApiErrorResponse> handleRuntimeException(
-            RuntimeException exception,
+    @ExceptionHandler(RessourceIntrouvableException.class)
+    public ResponseEntity<ApiErrorResponse> handleRessourceIntrouvableException(
+            RessourceIntrouvableException exception,
             HttpServletRequest request
     ) {
         HttpStatus status = isNotFound(exception.getMessage())

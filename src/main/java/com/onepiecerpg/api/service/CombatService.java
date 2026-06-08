@@ -12,6 +12,7 @@ import com.onepiecerpg.api.entity.Move;
 import com.onepiecerpg.api.entity.ProgressionJoueur;
 import com.onepiecerpg.api.entity.StatutCombat;
 import com.onepiecerpg.api.entity.Utilisateur;
+import com.onepiecerpg.api.exception.RessourceIntrouvableException;
 import com.onepiecerpg.api.repository.CombatRepository;
 import com.onepiecerpg.api.repository.EnnemiRepository;
 import com.onepiecerpg.api.repository.ProgressionJoueurRepository;
@@ -208,12 +209,12 @@ public class CombatService {
         return combatRepository.findByProgressionJoueurIdAndStatut(
                 progression.getId(),
                 StatutCombat.EN_COURS
-        ).orElseThrow(() -> new RuntimeException("Aucun combat en cours"));
+        ).orElseThrow(() -> new RessourceIntrouvableException("Aucun combat en cours"));
     }
 
     private Ennemi recupererEnnemi(Long ennemiId) {
         return ennemiRepository.findById(ennemiId)
-                .orElseThrow(() -> new RuntimeException("Ennemi introuvable"));
+                .orElseThrow(() -> new RessourceIntrouvableException("Ennemi introuvable"));
     }
 
     private Move recupererMoveJoueur(ProgressionJoueur progression, Long moveId) {
@@ -222,17 +223,17 @@ public class CombatService {
                 .stream()
                 .filter(move -> move.getId().equals(moveId))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Move introuvable"));
+                .orElseThrow(() -> new RessourceIntrouvableException("Move introuvable"));
     }
 
     private ProgressionJoueur recupererProgressionConnectee() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
         Utilisateur utilisateur = utilisateurRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Utilisateur connecté introuvable"));
+                .orElseThrow(() -> new RessourceIntrouvableException("Utilisateur connecté introuvable"));
 
         return progressionJoueurRepository.findByUtilisateur(utilisateur)
-                .orElseThrow(() -> new RuntimeException("Progression du joueur non trouvée"));
+                .orElseThrow(() -> new RessourceIntrouvableException("Progression du joueur non trouvée"));
     }
 
     private CombatResponse convertir(Combat combat) {

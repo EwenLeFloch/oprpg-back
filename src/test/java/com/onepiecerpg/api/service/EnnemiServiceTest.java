@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.onepiecerpg.api.entity.Ennemi;
+import com.onepiecerpg.api.exception.RessourceIntrouvableException;
 import com.onepiecerpg.api.repository.EnnemiRepository;
 import com.onepiecerpg.api.repository.ZoneRepository;
 
@@ -47,7 +48,7 @@ class EnnemiServiceTest {
         when(zoneRepository.existsById(1L)).thenReturn(false);
 
         assertThatThrownBy(() -> ennemiService.recupererEnnemisParZone(1L))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(RessourceIntrouvableException.class)
                 .hasMessage("Zone introuvable");
     }
 

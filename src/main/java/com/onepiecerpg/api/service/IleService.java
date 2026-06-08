@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.onepiecerpg.api.entity.Ile;
+import com.onepiecerpg.api.exception.RessourceIntrouvableException;
 import com.onepiecerpg.api.repository.IleRepository;
 
 @Service
@@ -22,11 +23,11 @@ public class IleService {
 
     public Ile recupererIleParId(Long ileId) {
         return ileRepository.findById(ileId)
-            .orElseThrow(() -> new RuntimeException("Île introuvable"));
+            .orElseThrow(() -> new RessourceIntrouvableException("Île introuvable"));
     }
 
     public Ile recupererIleParNom(String nom) {
         return ileRepository.findByNom(nom)
-            .orElseThrow(() -> new RuntimeException("Île introuvable"));
+            .orElseThrow(() -> new RessourceIntrouvableException("Île introuvable"));
     }
 }

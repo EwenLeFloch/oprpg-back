@@ -1,5 +1,7 @@
 package com.onepiecerpg.api.service;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -7,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.onepiecerpg.api.dto.NewsRequest;
 import com.onepiecerpg.api.dto.NewsResponse;
 import com.onepiecerpg.api.entity.News;
+import com.onepiecerpg.api.exception.RessourceIntrouvableException;
 import com.onepiecerpg.api.repository.NewsRepository;
 
 @Service
@@ -33,6 +36,7 @@ public class NewsService {
         News news = new News();
         news.setTitre(request.titre());
         news.setContenu(request.contenu());
+        news.setDateCreation(LocalDateTime.now(ZoneId.of("Europe/Paris")));
 
         return NewsResponse.from(newsRepository.save(news));
     }
@@ -48,7 +52,7 @@ public class NewsService {
 
     public void supprimerNews(Long newsId) {
         if (!newsRepository.existsById(newsId)) {
-            throw new RuntimeException("News introuvable");
+            throw new RessourceIntrouvableException("News introuvable");
         }
 
         newsRepository.deleteById(newsId);
@@ -56,6 +60,6 @@ public class NewsService {
 
     private News recupererNews(Long newsId) {
         return newsRepository.findById(newsId)
-                .orElseThrow(() -> new RuntimeException("News introuvable"));
+                .orElseThrow(() -> new RessourceIntrouvableException("News introuvable"));
     }
 }

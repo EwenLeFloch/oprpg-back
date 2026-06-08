@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.onepiecerpg.api.entity.Ennemi;
+import com.onepiecerpg.api.exception.RessourceIntrouvableException;
 import com.onepiecerpg.api.repository.EnnemiRepository;
 import com.onepiecerpg.api.repository.ZoneRepository;
 
@@ -34,17 +35,17 @@ public class EnnemiService {
 
     public Ennemi recupererEnnemiParId(Long ennemiId) {
         return ennemiRepository.findById(ennemiId)
-                .orElseThrow(() -> new RuntimeException("Ennemi introuvable"));
+                .orElseThrow(() -> new RessourceIntrouvableException("Ennemi introuvable"));
     }
 
     public Ennemi recupererEnnemiParNom(String nom) {
         return ennemiRepository.findByNom(nom)
-                .orElseThrow(() -> new RuntimeException("Ennemi introuvable"));
+                .orElseThrow(() -> new RessourceIntrouvableException("Ennemi introuvable"));
     }
 
     private void verifierZoneExiste(Long zoneId) {
         if (!zoneRepository.existsById(zoneId)) {
-            throw new RuntimeException("Zone introuvable");
+            throw new RessourceIntrouvableException("Zone introuvable");
         }
     }
 }

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.onepiecerpg.api.entity.Faction;
+import com.onepiecerpg.api.exception.RessourceIntrouvableException;
 import com.onepiecerpg.api.repository.FactionRepository;
 
 class FactionServiceTest {
@@ -46,7 +47,7 @@ class FactionServiceTest {
         when(factionRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> factionService.recupererFactionParId(1L))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(RessourceIntrouvableException.class)
                 .hasMessage("Faction non trouvée");
     }
 }
