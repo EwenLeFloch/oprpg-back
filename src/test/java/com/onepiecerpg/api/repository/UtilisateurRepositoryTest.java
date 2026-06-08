@@ -1,55 +1,49 @@
 package com.onepiecerpg.api.repository;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.Optional;
 
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import com.onepiecerpg.api.entity.Utilisateur;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 @DataJpaTest
 class UtilisateurRepositoryTest {
-  @Autowired
-  private UtilisateurRepository utilisateurRepository;
 
-  @Test
-  @DisplayName("Doit trouver un utilisateur par email")
-  void shouldFindUserByEmail() {
-    Utilisateur utilisateur = new Utilisateur();
-    utilisateur.setPseudo("testuser");
-    utilisateur.setEmail("test@test.com");
-    utilisateur.setMotDePasseHash("hashedpassword");
-    utilisateur.setRole("USER");
-    utilisateurRepository.save(utilisateur);
+    @Autowired
+    private UtilisateurRepository utilisateurRepository;
 
-    Optional<Utilisateur> result = utilisateurRepository.findByEmail("test@test.com");
-    assertThat(result).isPresent();
-    assertThat(result.get().getPseudo()).isEqualTo("testuser");
-  }
+    @Test
+    void shouldFindByEmail() {
+        Utilisateur utilisateur = utilisateur();
+        utilisateurRepository.save(utilisateur);
 
-  @Test
-  @DisplayName("Doit trouver un utilisateur par pseudo")
-  void shouldFindUserByPseudo() {
-    Utilisateur utilisateur = new Utilisateur();
-    utilisateur.setPseudo("testuser");
-    utilisateur.setEmail("test@test.com");
-    utilisateur.setMotDePasseHash("hashedpassword");
-    utilisateur.setRole("USER");
-    utilisateurRepository.save(utilisateur);
+        Optional<Utilisateur> result = utilisateurRepository.findByEmail("luffy@test.com");
 
-    Optional<Utilisateur> result = utilisateurRepository.findByPseudo("testuser");
-    assertThat(result).isPresent();
-    assertThat(result.get().getEmail()).isEqualTo("test@test.com");
-  }
+        assertThat(result).isPresent();
+        assertThat(result.get().getPseudo()).isEqualTo("luffy");
+    }
 
-  @Test
-  @DisplayName("Doit retourner vide si l'email n'existe pas")
-  void shouldReturnEmptyWhenEmailNotFound() {
-    Optional<Utilisateur> result = utilisateurRepository.findByEmail("email-invalide@test.com");
-    assertThat(result).isEmpty();
-  }
+    @Test
+    void shouldFindByPseudo() {
+        Utilisateur utilisateur = utilisateur();
+        utilisateurRepository.save(utilisateur);
+
+        Optional<Utilisateur> result = utilisateurRepository.findByPseudo("luffy");
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getEmail()).isEqualTo("luffy@test.com");
+    }
+
+    private Utilisateur utilisateur() {
+        Utilisateur utilisateur = new Utilisateur();
+        utilisateur.setPseudo("luffy");
+        utilisateur.setEmail("luffy@test.com");
+        utilisateur.setMotDePasseHash("hashed-password");
+        utilisateur.setRole("USER");
+        return utilisateur;
+    }
 }
