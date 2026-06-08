@@ -109,7 +109,7 @@ class CombatServiceTest {
     @DisplayName("Doit attaquer un ennemi")
     void shouldAttackEnemy() {
         ProgressionJoueur progression = progression();
-        Move attaque = move(1L, "Coup de poing", TypeMove.ATTAQUE, 5);
+        Move attaque = move(1L, "Coup de poing", TypeMove.ATTAQUE, 5, 8);
         progression.getPersonnage().setMoves(new HashSet<>(Set.of(attaque)));
 
         Ennemi ennemi = ennemi(1L, "Bandit", 20, 3);
@@ -133,7 +133,7 @@ class CombatServiceTest {
     @DisplayName("Doit terminer le combat en victoire")
     void shouldWinCombat() {
         ProgressionJoueur progression = progression();
-        Move attaque = move(1L, "Gros coup", TypeMove.ATTAQUE, 50);
+        Move attaque = move(1L, "Gros coup", TypeMove.ATTAQUE, 50, 55);
         progression.getPersonnage().setMoves(new HashSet<>(Set.of(attaque)));
 
         Ennemi ennemi = ennemi(1L, "Bandit", 20, 3);
@@ -158,7 +158,7 @@ class CombatServiceTest {
         ProgressionJoueur progression = progression();
         progression.setVieActuelle(20);
 
-        Move soin = move(1L, "Lait", TypeMove.SOIN, 50);
+        Move soin = move(1L, "Lait", TypeMove.SOIN, 25, 29);
         progression.getPersonnage().setMoves(new HashSet<>(Set.of(soin)));
 
         Ennemi ennemi = ennemi(1L, "Bandit", 20, 3);
@@ -181,7 +181,7 @@ class CombatServiceTest {
         ProgressionJoueur progression = progression();
         progression.setVieActuelle(2);
 
-        Move attaque = move(1L, "Petit coup", TypeMove.ATTAQUE, 1);
+        Move attaque = move(1L, "Petit coup", TypeMove.ATTAQUE, 1, 3);
         progression.getPersonnage().setMoves(new HashSet<>(Set.of(attaque)));
 
         Ennemi ennemi = ennemi(1L, "Bandit", 50, 10);
@@ -258,12 +258,13 @@ class CombatServiceTest {
         return ennemi;
     }
 
-    private Move move(Long id, String nom, TypeMove typeMove, int valeurMove) {
+    private Move move(Long id, String nom, TypeMove typeMove, int valeurMin, int valeurMax) {
         Move move = new Move();
         move.setId(id);
         move.setNom(nom);
         move.setTypeMove(typeMove);
-        move.setValeurMove(valeurMove);
+        move.setValeurMin(valeurMin);
+        move.setValeurMax(valeurMax);
         move.setCoutEndurance(1);
         return move;
     }

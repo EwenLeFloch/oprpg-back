@@ -6,11 +6,23 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.onepiecerpg.api.dto.CombatResponse;
-import com.onepiecerpg.api.entity.*;
-import com.onepiecerpg.api.repository.*;
+import com.onepiecerpg.api.entity.Combat;
+import com.onepiecerpg.api.entity.Ennemi;
+import com.onepiecerpg.api.entity.Move;
+import com.onepiecerpg.api.entity.ProgressionJoueur;
+import com.onepiecerpg.api.entity.StatutCombat;
+import com.onepiecerpg.api.entity.Utilisateur;
+import com.onepiecerpg.api.repository.CombatRepository;
+import com.onepiecerpg.api.repository.EnnemiRepository;
+import com.onepiecerpg.api.repository.ProgressionJoueurRepository;
+import com.onepiecerpg.api.repository.UtilisateurRepository;
 
 @Service
 public class CombatService {
+
+    private static final int BONUS_VIE_MAX_PAR_NIVEAU = 2;
+    private static final int BONUS_ENDURANCE_MAX_PAR_NIVEAU = 2;
+    private static final int BONUS_PUISSANCE_PAR_NIVEAU = 1;
 
     private final CombatRepository combatRepository;
     private final EnnemiRepository ennemiRepository;
@@ -30,61 +42,29 @@ public class CombatService {
     }
 
     public CombatResponse demarrerCombat(Long ennemiId) {
-
         ProgressionJoueur progression = recupererProgressionConnectee();
+        verifierAucunCombatEnCours(progression);
 
-        combatRepository.findByProgressionJoueurIdAndStatut(
-                progression.getId(),
-                StatutCombat.EN_COURS
-        ).ifPresent(c -> {
-            throw new IllegalStateException("Un combat est déjà en cours");
-        });
-
-        Ennemi ennemi = ennemiRepository.findById(ennemiId)
-                .orElseThrow(() -> new RuntimeException("Ennemi introuvable"));
+        Ennemi ennemi = recupererEnnemi(ennemiId);
 
         Combat combat = new Combat();
         combat.setProgressionJoueur(progression);
         combat.setEnnemi(ennemi);
         combat.setVieEnnemiActuelle(ennemi.getVieMax());
 
-        combat = combatRepository.save(combat);
-
-        return convertir(combat);
+        return convertir(combatRepository.save(combat));
     }
 
     public CombatResponse recupererCombatEnCours() {
-
-        ProgressionJoueur progression = recupererProgressionConnectee();
-
-        Combat combat = combatRepository.findByProgressionJoueurIdAndStatut(
-                        progression.getId(),
-                        StatutCombat.EN_COURS
-                )
-                .orElseThrow(() -> new RuntimeException("Aucun combat en cours"));
-
-        return convertir(combat);
+        return convertir(recupererCombatEnCoursConnecte());
     }
 
     public CombatResponse utiliserMove(Long moveId) {
-
         ProgressionJoueur progression = recupererProgressionConnectee();
-
-        Combat combat = combatRepository.findByProgressionJoueurIdAndStatut(
-                        progression.getId(),
-                        StatutCombat.EN_COURS
-                )
-                .orElseThrow(() -> new RuntimeException("Aucun combat en cours"));
-
-        Move move = progression.getPersonnage()
-                .getMoves()
-                .stream()
-                .filter(m -> m.getId().equals(moveId))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Move introuvable"));
+        Combat combat = recupererCombatEnCours(progression);
+        Move move = recupererMoveJoueur(progression, moveId);
 
         appliquerMove(combat, progression, move);
-
         verifierFinCombat(combat, progression);
 
         combatRepository.save(combat);
@@ -94,101 +74,71 @@ public class CombatService {
     }
 
     public CombatResponse fuirCombat() {
-
-        ProgressionJoueur progression = recupererProgressionConnectee();
-
-        Combat combat = combatRepository.findByProgressionJoueurIdAndStatut(
-                        progression.getId(),
-                        StatutCombat.EN_COURS
-                )
-                .orElseThrow(() -> new RuntimeException("Aucun combat en cours"));
-
+        Combat combat = recupererCombatEnCoursConnecte();
         combat.setStatut(StatutCombat.FUITE);
 
-        combatRepository.save(combat);
-
-        return convertir(combat);
+        return convertir(combatRepository.save(combat));
     }
 
-    private void appliquerMove(
-            Combat combat,
-            ProgressionJoueur progression,
-            Move move
-    ) {
-
+    private void appliquerMove(Combat combat, ProgressionJoueur progression, Move move) {
         switch (move.getTypeMove()) {
-
-            case ATTAQUE -> {
-                int degats = calculerDegats(progression, move);
-
-                combat.setVieEnnemiActuelle(
-                        Math.max(
-                                0,
-                                combat.getVieEnnemiActuelle() - degats
-                        )
-                );
-            }
-
-            case SOIN -> {
-                int soin = calculerSoin(move);
-                progression.setVieActuelle(
-                        Math.min(
-                                progression.getVieMax(),
-                                progression.getVieActuelle() + soin
-                        )
-                );
-            }
-
-            default -> throw new IllegalArgumentException(
-                    "Type de move non géré pour le moment"
-            );
+            case ATTAQUE -> appliquerAttaque(combat, progression, move);
+            case SOIN -> appliquerSoin(progression, move);
+            default -> throw new IllegalArgumentException("Type de move non géré pour le moment");
         }
     }
 
-    private void verifierFinCombat(
-            Combat combat,
-            ProgressionJoueur progression
-    ) {
+    private void appliquerAttaque(Combat combat, ProgressionJoueur progression, Move move) {
+        int degats = calculerDegats(progression, move);
+        int nouvelleVieEnnemi = combat.getVieEnnemiActuelle() - degats;
 
-        if (combat.getVieEnnemiActuelle() <= 0) {
+        combat.setVieEnnemiActuelle(Math.max(0, nouvelleVieEnnemi));
+    }
 
-            combat.setStatut(StatutCombat.VICTOIRE);
+    private void appliquerSoin(ProgressionJoueur progression, Move move) {
+        int soin = calculerSoin(move);
+        int nouvelleVieJoueur = progression.getVieActuelle() + soin;
 
-            progression.setExperience(
-                    progression.getExperience() + 10
-            );
+        progression.setVieActuelle(Math.min(progression.getVieMax(), nouvelleVieJoueur));
+    }
 
-            progression.setBerries(
-                    progression.getBerries() + 100
-            );
-
+    private void verifierFinCombat(Combat combat, ProgressionJoueur progression) {
+        if (ennemiEstVaincu(combat)) {
+            appliquerVictoire(combat, progression);
             return;
         }
 
-        progression.setVieActuelle(
-                Math.max(
-                        0,
-                        progression.getVieActuelle()
-                                - combat.getEnnemi().getPuissance()
-                )
-        );
+        appliquerTourEnnemi(combat, progression);
 
-        if (progression.getVieActuelle() <= 0) {
+        if (joueurEstVaincu(progression)) {
             combat.setStatut(StatutCombat.DEFAITE);
         }
     }
 
-    private int valeurAleatoireEntre(int min, int max) {
-        return ThreadLocalRandom.current().nextInt(min, max + 1);
+    private void appliquerVictoire(Combat combat, ProgressionJoueur progression) {
+        combat.setStatut(StatutCombat.VICTOIRE);
+
+        int experienceGagnee = calculerExperienceGagnee(combat.getEnnemi());
+        appliquerExperience(progression, experienceGagnee);
     }
 
-    private int bonusPuissance(int puissance) {
-        return (int) Math.floor(Math.sqrt(puissance));
+    private void appliquerTourEnnemi(Combat combat, ProgressionJoueur progression) {
+        int degatsEnnemi = combat.getEnnemi().getPuissance();
+        int nouvelleVieJoueur = progression.getVieActuelle() - degatsEnnemi;
+
+        progression.setVieActuelle(Math.max(0, nouvelleVieJoueur));
+    }
+
+    private boolean ennemiEstVaincu(Combat combat) {
+        return combat.getVieEnnemiActuelle() <= 0;
+    }
+
+    private boolean joueurEstVaincu(ProgressionJoueur progression) {
+        return progression.getVieActuelle() <= 0;
     }
 
     private int calculerDegats(ProgressionJoueur progression, Move move) {
         int base = valeurAleatoireEntre(move.getValeurMin(), move.getValeurMax());
-
         return base + bonusPuissance(progression.getPuissance());
     }
 
@@ -196,24 +146,95 @@ public class CombatService {
         return valeurAleatoireEntre(move.getValeurMin(), move.getValeurMax());
     }
 
+    private int bonusPuissance(int puissance) {
+        return (int) Math.sqrt(puissance);
+    }
+
+    private int calculerExperienceGagnee(Ennemi ennemi) {
+        return valeurAleatoireEntre(ennemi.getExperienceMin(), ennemi.getExperienceMax());
+    }
+
+    private void appliquerExperience(ProgressionJoueur progression, int experienceGagnee) {
+        progression.setExperience(progression.getExperience() + experienceGagnee);
+
+        while (peutMonterDeNiveau(progression)) {
+            monterDeNiveau(progression);
+        }
+    }
+
+    private boolean peutMonterDeNiveau(ProgressionJoueur progression) {
+        int niveauSuivant = progression.getNiveau() + 1;
+        return progression.getExperience() >= experienceRequise(niveauSuivant);
+    }
+
+    private void monterDeNiveau(ProgressionJoueur progression) {
+        progression.setNiveau(progression.getNiveau() + 1);
+        progression.setPuissance(progression.getPuissance() + BONUS_PUISSANCE_PAR_NIVEAU);
+        progression.setVieMax(progression.getVieMax() + BONUS_VIE_MAX_PAR_NIVEAU);
+        progression.setVieActuelle(progression.getVieMax());
+        progression.setEnduranceMax(progression.getEnduranceMax() + BONUS_ENDURANCE_MAX_PAR_NIVEAU);
+        progression.setEnduranceActuelle(progression.getEnduranceMax());
+    }
+
+    private int experienceRequise(int niveau) {
+        int niveauEffectif = niveau - 1;
+        return 20 * niveauEffectif * niveauEffectif + 10 * niveauEffectif;
+    }
+
+    private int valeurAleatoireEntre(int min, int max) {
+        if (min > max) {
+            throw new IllegalArgumentException("La valeur minimale ne peut pas être supérieure à la valeur maximale");
+        }
+
+        return ThreadLocalRandom.current().nextInt(min, max + 1);
+    }
+
+    private void verifierAucunCombatEnCours(ProgressionJoueur progression) {
+        combatRepository.findByProgressionJoueurIdAndStatut(
+                progression.getId(),
+                StatutCombat.EN_COURS
+        ).ifPresent(combat -> {
+            throw new IllegalStateException("Un combat est déjà en cours");
+        });
+    }
+
+    private Combat recupererCombatEnCoursConnecte() {
+        ProgressionJoueur progression = recupererProgressionConnectee();
+        return recupererCombatEnCours(progression);
+    }
+
+    private Combat recupererCombatEnCours(ProgressionJoueur progression) {
+        return combatRepository.findByProgressionJoueurIdAndStatut(
+                progression.getId(),
+                StatutCombat.EN_COURS
+        ).orElseThrow(() -> new RuntimeException("Aucun combat en cours"));
+    }
+
+    private Ennemi recupererEnnemi(Long ennemiId) {
+        return ennemiRepository.findById(ennemiId)
+                .orElseThrow(() -> new RuntimeException("Ennemi introuvable"));
+    }
+
+    private Move recupererMoveJoueur(ProgressionJoueur progression, Long moveId) {
+        return progression.getPersonnage()
+                .getMoves()
+                .stream()
+                .filter(move -> move.getId().equals(moveId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Move introuvable"));
+    }
+
     private ProgressionJoueur recupererProgressionConnectee() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        String email = SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getName();
+        Utilisateur utilisateur = utilisateurRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Utilisateur connecté introuvable"));
 
-        Utilisateur utilisateur = utilisateurRepository
-                .findByEmail(email)
-                .orElseThrow();
-
-        return progressionJoueurRepository
-                .findByUtilisateur(utilisateur)
-                .orElseThrow();
+        return progressionJoueurRepository.findByUtilisateur(utilisateur)
+                .orElseThrow(() -> new RuntimeException("Progression du joueur non trouvée"));
     }
 
     private CombatResponse convertir(Combat combat) {
-
         return new CombatResponse(
                 combat.getId(),
                 combat.getEnnemi().getNom(),

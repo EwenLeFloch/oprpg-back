@@ -29,6 +29,14 @@ public class Ennemi {
     @Column(nullable = false)
     private int puissance;
 
+    @Min(1)
+    @Column(nullable = false)
+    private int experienceMin;
+
+    @Min(1)
+    @Column(nullable = false)
+    private int experienceMax;
+
     @Column(nullable = false)
     private boolean boss = false;
 
