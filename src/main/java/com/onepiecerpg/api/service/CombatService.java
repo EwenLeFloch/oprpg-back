@@ -1,6 +1,6 @@
 package com.onepiecerpg.api.service;
 
-import java.util.concurrent.ThreadLocalRandom;
+import java.security.SecureRandom;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -181,12 +181,13 @@ public class CombatService {
         return 20 * niveauEffectif * niveauEffectif + 10 * niveauEffectif;
     }
 
+    private static final SecureRandom RANDOM = new SecureRandom();
+
     private int valeurAleatoireEntre(int min, int max) {
         if (min > max) {
             throw new IllegalArgumentException("La valeur minimale ne peut pas être supérieure à la valeur maximale");
         }
-
-        return ThreadLocalRandom.current().nextInt(min, max + 1);
+        return RANDOM.nextInt(min, max + 1);
     }
 
     private void verifierAucunCombatEnCours(ProgressionJoueur progression) {
