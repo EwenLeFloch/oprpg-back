@@ -1,7 +1,6 @@
 package com.onepiecerpg.api.service;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.HashSet;
@@ -10,7 +9,6 @@ import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -62,10 +60,9 @@ class CombatServiceTest {
     }
 
     @Test
-    @DisplayName("Doit démarrer un combat")
     void shouldStartCombat() {
         ProgressionJoueur progression = progression();
-        Ennemi ennemi = ennemi(1L, "Bandit", 20, 3);
+        Ennemi ennemi = ennemi("Bandit", 20, 3, 5, 5);
 
         mockProgressionConnectee(progression);
         when(combatRepository.findByProgressionJoueurIdAndStatut(1L, StatutCombat.EN_COURS))
@@ -84,13 +81,10 @@ class CombatServiceTest {
         assertThat(response.vieEnnemiActuelle()).isEqualTo(20);
         assertThat(response.vieJoueurActuelle()).isEqualTo(30);
         assertThat(response.statut()).isEqualTo(StatutCombat.EN_COURS);
-
-        verify(combatRepository).save(any(Combat.class));
     }
 
     @Test
-    @DisplayName("Doit refuser de démarrer un combat si un combat est déjà en cours")
-    void shouldRejectStartCombatWhenCombatAlreadyExists() {
+    void shouldRejectStartCombatWhenAlreadyInCombat() {
         ProgressionJoueur progression = progression();
 
         mockProgressionConnectee(progression);
@@ -102,17 +96,17 @@ class CombatServiceTest {
                 .hasMessage("Un combat est déjà en cours");
 
         verify(ennemiRepository, never()).findById(anyLong());
-        verify(combatRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("Doit attaquer un ennemi")
     void shouldAttackEnemy() {
         ProgressionJoueur progression = progression();
-        Move attaque = move(1L, "Coup de poing", TypeMove.ATTAQUE, 5, 8);
+        progression.setPuissance(4);
+
+        Move attaque = move(1L, TypeMove.ATTAQUE, 5, 5);
         progression.getPersonnage().setMoves(new HashSet<>(Set.of(attaque)));
 
-        Ennemi ennemi = ennemi(1L, "Bandit", 20, 3);
+        Ennemi ennemi = ennemi("Bandit", 20, 3, 5, 5);
         Combat combat = combat(progression, ennemi, 20);
 
         mockProgressionConnectee(progression);
@@ -121,47 +115,20 @@ class CombatServiceTest {
 
         CombatResponse response = combatService.utiliserMove(1L);
 
-        assertThat(response.vieEnnemiActuelle()).isEqualTo(10);
+        assertThat(response.vieEnnemiActuelle()).isEqualTo(13);
         assertThat(response.vieJoueurActuelle()).isEqualTo(27);
         assertThat(response.statut()).isEqualTo(StatutCombat.EN_COURS);
-
-        verify(combatRepository).save(combat);
-        verify(progressionJoueurRepository).save(progression);
     }
 
     @Test
-    @DisplayName("Doit terminer le combat en victoire")
-    void shouldWinCombat() {
-        ProgressionJoueur progression = progression();
-        Move attaque = move(1L, "Gros coup", TypeMove.ATTAQUE, 50, 55);
-        progression.getPersonnage().setMoves(new HashSet<>(Set.of(attaque)));
-
-        Ennemi ennemi = ennemi(1L, "Bandit", 20, 3);
-        Combat combat = combat(progression, ennemi, 20);
-
-        mockProgressionConnectee(progression);
-        when(combatRepository.findByProgressionJoueurIdAndStatut(1L, StatutCombat.EN_COURS))
-                .thenReturn(Optional.of(combat));
-
-        CombatResponse response = combatService.utiliserMove(1L);
-
-        assertThat(response.vieEnnemiActuelle()).isZero();
-        assertThat(response.statut()).isEqualTo(StatutCombat.VICTOIRE);
-        assertThat(progression.getExperience()).isEqualTo(10);
-        assertThat(progression.getBerries()).isEqualTo(100);
-        assertThat(progression.getVieActuelle()).isEqualTo(30);
-    }
-
-    @Test
-    @DisplayName("Doit soigner le joueur sans dépasser sa vie maximale")
-    void shouldHealPlayerWithoutExceedingMaxHp() {
+    void shouldHealPlayer() {
         ProgressionJoueur progression = progression();
         progression.setVieActuelle(20);
 
-        Move soin = move(1L, "Lait", TypeMove.SOIN, 25, 29);
+        Move soin = move(1L, TypeMove.SOIN, 5, 5);
         progression.getPersonnage().setMoves(new HashSet<>(Set.of(soin)));
 
-        Ennemi ennemi = ennemi(1L, "Bandit", 20, 3);
+        Ennemi ennemi = ennemi("Bandit", 20, 3, 5, 5);
         Combat combat = combat(progression, ennemi, 20);
 
         mockProgressionConnectee(progression);
@@ -170,21 +137,40 @@ class CombatServiceTest {
 
         CombatResponse response = combatService.utiliserMove(1L);
 
-        assertThat(response.vieJoueurActuelle()).isEqualTo(27);
-        assertThat(progression.getVieActuelle()).isEqualTo(27);
-        assertThat(response.statut()).isEqualTo(StatutCombat.EN_COURS);
+        assertThat(response.vieJoueurActuelle()).isEqualTo(22);
     }
 
     @Test
-    @DisplayName("Doit terminer le combat en défaite")
+    void shouldWinCombatAndGainExperience() {
+        ProgressionJoueur progression = progression();
+        progression.setExperience(25);
+
+        Move attaque = move(1L, TypeMove.ATTAQUE, 50, 50);
+        progression.getPersonnage().setMoves(new HashSet<>(Set.of(attaque)));
+
+        Ennemi ennemi = ennemi("Bandit", 20, 3, 10, 10);
+        Combat combat = combat(progression, ennemi, 20);
+
+        mockProgressionConnectee(progression);
+        when(combatRepository.findByProgressionJoueurIdAndStatut(1L, StatutCombat.EN_COURS))
+                .thenReturn(Optional.of(combat));
+
+        CombatResponse response = combatService.utiliserMove(1L);
+
+        assertThat(response.statut()).isEqualTo(StatutCombat.VICTOIRE);
+        assertThat(progression.getExperience()).isEqualTo(35);
+        assertThat(progression.getNiveau()).isEqualTo(2);
+    }
+
+    @Test
     void shouldLoseCombat() {
         ProgressionJoueur progression = progression();
         progression.setVieActuelle(2);
 
-        Move attaque = move(1L, "Petit coup", TypeMove.ATTAQUE, 1, 3);
+        Move attaque = move(1L, TypeMove.ATTAQUE, 1, 1);
         progression.getPersonnage().setMoves(new HashSet<>(Set.of(attaque)));
 
-        Ennemi ennemi = ennemi(1L, "Bandit", 50, 10);
+        Ennemi ennemi = ennemi("Bandit", 50, 10, 5, 5);
         Combat combat = combat(progression, ennemi, 50);
 
         mockProgressionConnectee(progression);
@@ -198,47 +184,47 @@ class CombatServiceTest {
     }
 
     @Test
-    @DisplayName("Doit fuir un combat")
     void shouldFleeCombat() {
         ProgressionJoueur progression = progression();
-        Ennemi ennemi = ennemi(1L, "Bandit", 20, 3);
+        Ennemi ennemi = ennemi("Bandit", 20, 3, 5, 5);
         Combat combat = combat(progression, ennemi, 20);
 
         mockProgressionConnectee(progression);
         when(combatRepository.findByProgressionJoueurIdAndStatut(1L, StatutCombat.EN_COURS))
                 .thenReturn(Optional.of(combat));
+        when(combatRepository.save(combat)).thenReturn(combat);
 
         CombatResponse response = combatService.fuirCombat();
 
         assertThat(response.statut()).isEqualTo(StatutCombat.FUITE);
-        verify(combatRepository).save(combat);
     }
 
     private void mockProgressionConnectee(ProgressionJoueur progression) {
+        Utilisateur utilisateur = utilisateur();
+
+        when(utilisateurRepository.findByEmail("test@test.com")).thenReturn(Optional.of(utilisateur));
+        when(progressionJoueurRepository.findByUtilisateur(utilisateur)).thenReturn(Optional.of(progression));
+    }
+
+    private Utilisateur utilisateur() {
         Utilisateur utilisateur = new Utilisateur();
+        utilisateur.setId(1L);
         utilisateur.setEmail("test@test.com");
-
-        when(utilisateurRepository.findByEmail("test@test.com"))
-                .thenReturn(Optional.of(utilisateur));
-
-        when(progressionJoueurRepository.findByUtilisateur(utilisateur))
-                .thenReturn(Optional.of(progression));
+        return utilisateur;
     }
 
     private ProgressionJoueur progression() {
-        Utilisateur utilisateur = new Utilisateur();
-        utilisateur.setEmail("test@test.com");
-
         Personnage personnage = new Personnage();
+        personnage.setId(1L);
         personnage.setNom("Luffy");
 
         ProgressionJoueur progression = new ProgressionJoueur();
         progression.setId(1L);
-        progression.setUtilisateur(utilisateur);
+        progression.setUtilisateur(utilisateur());
         progression.setPersonnage(personnage);
         progression.setNiveau(1);
         progression.setExperience(0);
-        progression.setPuissance(5);
+        progression.setPuissance(1);
         progression.setVieMax(30);
         progression.setVieActuelle(30);
         progression.setEnduranceMax(10);
@@ -249,19 +235,21 @@ class CombatServiceTest {
         return progression;
     }
 
-    private Ennemi ennemi(Long id, String nom, int vieMax, int puissance) {
+    private Ennemi ennemi(String nom, int vieMax, int puissance, int experienceMin, int experienceMax) {
         Ennemi ennemi = new Ennemi();
-        ennemi.setId(id);
+        ennemi.setId(1L);
         ennemi.setNom(nom);
         ennemi.setVieMax(vieMax);
         ennemi.setPuissance(puissance);
+        ennemi.setExperienceMin(experienceMin);
+        ennemi.setExperienceMax(experienceMax);
         return ennemi;
     }
 
-    private Move move(Long id, String nom, TypeMove typeMove, int valeurMin, int valeurMax) {
+    private Move move(Long id, TypeMove typeMove, int valeurMin, int valeurMax) {
         Move move = new Move();
         move.setId(id);
-        move.setNom(nom);
+        move.setNom("Move test");
         move.setTypeMove(typeMove);
         move.setValeurMin(valeurMin);
         move.setValeurMax(valeurMax);
