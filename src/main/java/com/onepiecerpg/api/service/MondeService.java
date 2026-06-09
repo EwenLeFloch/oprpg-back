@@ -12,42 +12,42 @@ import com.onepiecerpg.api.repository.ZoneRepository;
 
 @Service
 public class MondeService {
-    
-    private final IleRepository ileRepository;
-    private final ZoneRepository zoneRepository;
 
-    public MondeService(IleRepository ileRepository, ZoneRepository zoneRepository) {
-        this.ileRepository = ileRepository;
-        this.zoneRepository = zoneRepository;
+  private final IleRepository ileRepository;
+  private final ZoneRepository zoneRepository;
+
+  public MondeService(IleRepository ileRepository, ZoneRepository zoneRepository) {
+    this.ileRepository = ileRepository;
+    this.zoneRepository = zoneRepository;
+  }
+
+  public List<Ile> recupererToutesLesIles() {
+    return ileRepository.findAll();
+  }
+
+  public Ile recupererIleParId(Long ileId) {
+    return ileRepository.findById(ileId)
+        .orElseThrow(() -> new RessourceIntrouvableException("Île non trouvée"));
+  }
+
+  public List<Zone> recupererZonesParIle(Long ileId) {
+    if (!ileRepository.existsById(ileId)) {
+      throw new RessourceIntrouvableException("Île non trouvée");
     }
 
-    public List<Ile> recupererToutesLesIles() {
-        return ileRepository.findAll();
-    }
-    
-    public Ile recupererIleParId(Long ileId) {
-        return ileRepository.findById(ileId)
-                .orElseThrow(() -> new RessourceIntrouvableException("Île non trouvée"));
-    }
+    return zoneRepository.findByIleId(ileId);
+  }
 
-    public List<Zone> recupererZonesParIle(Long ileId) {
-        if (!ileRepository.existsById(ileId)) {
-            throw new RessourceIntrouvableException("Île non trouvée");
-        }
+  public Zone recupererZoneParId(Long zoneId) {
+    return zoneRepository.findById(zoneId)
+        .orElseThrow(() -> new RessourceIntrouvableException("Zone non trouvée"));
+  }
 
-        return zoneRepository.findByIleId(ileId);
-    }
+  public boolean joueurPeutAccederZone(int niveauJoueur, Zone zone) {
+    return niveauJoueur >= zone.getNiveauRequis();
+  }
 
-    public Zone recupererZoneParId(Long zoneId) {
-        return zoneRepository.findById(zoneId)
-                .orElseThrow(() -> new RessourceIntrouvableException("Zone non trouvée"));
-    }
-
-    public boolean joueurPeutAccederZone(int niveauJoueur, Zone zone) {
-        return niveauJoueur >= zone.getNiveauRequis();
-    }
-
-    public boolean joueurPeutAccederIle(int niveauJoueur, Ile ile) {
-        return niveauJoueur >= ile.getNiveauRequis();
-    }
+  public boolean joueurPeutAccederIle(int niveauJoueur, Ile ile) {
+    return niveauJoueur >= ile.getNiveauRequis();
+  }
 }

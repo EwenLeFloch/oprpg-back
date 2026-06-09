@@ -7,5 +7,5 @@ import com.onepiecerpg.api.entity.ProgressionJoueur;
 import com.onepiecerpg.api.entity.Utilisateur;
 
 public interface ProgressionJoueurRepository extends JpaRepository<ProgressionJoueur, Long> {
-    Optional<ProgressionJoueur> findByUtilisateur(Utilisateur utilisateur);
+  Optional<ProgressionJoueur> findByUtilisateur(Utilisateur utilisateur);
 }

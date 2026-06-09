@@ -25,121 +25,116 @@ import com.onepiecerpg.api.security.JwtAuthenticationFilter;
 import com.onepiecerpg.api.service.JwtService;
 import com.onepiecerpg.api.service.UtilisateurService;
 
-@WebMvcTest(
-        controllers = AuthController.class,
-        excludeAutoConfiguration = {
-                SecurityAutoConfiguration.class,
-                SecurityFilterAutoConfiguration.class
-        }
-)
+@WebMvcTest(controllers = AuthController.class, excludeAutoConfiguration = {
+    SecurityAutoConfiguration.class,
+    SecurityFilterAutoConfiguration.class
+})
 @Import({
-        GlobalExceptionHandler.class,
-        ClockConfig.class
+    GlobalExceptionHandler.class,
+    ClockConfig.class
 })
 @AutoConfigureMockMvc(addFilters = false)
 class AuthControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+  @Autowired
+  private MockMvc mockMvc;
 
-    @MockitoBean
-    private UtilisateurService utilisateurService;
+  @MockitoBean
+  private UtilisateurService utilisateurService;
 
-    @MockitoBean
-    private JwtService jwtService;
+  @MockitoBean
+  private JwtService jwtService;
 
-    @MockitoBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
+  @MockitoBean
+  private JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @Test
-    @DisplayName("Doit retourner 201 lors d'une inscription valide")
-    void shouldRegisterUser() throws Exception {
-        UtilisateurResponseDto utilisateur = new UtilisateurResponseDto(
-                1L,
-                "testuser",
-                "test@test.com",
-                "USER"
-        );
+  @Test
+  @DisplayName("Doit retourner 201 lors d'une inscription valide")
+  void shouldRegisterUser() throws Exception {
+    UtilisateurResponseDto utilisateur = new UtilisateurResponseDto(
+        1L,
+        "testuser",
+        "test@test.com",
+        "USER");
 
-        when(utilisateurService.creerUtilisateur(ArgumentMatchers.any())).thenReturn(utilisateur);
+    when(utilisateurService.creerUtilisateur(ArgumentMatchers.any())).thenReturn(utilisateur);
 
-        String body = """
-                {
-                  "pseudo": "testuser",
-                  "email": "test@test.com",
-                  "motDePasse": "Password123"
-                }
-                """;
+    String body = """
+        {
+          "pseudo": "testuser",
+          "email": "test@test.com",
+          "motDePasse": "Password123"
+        }
+        """;
 
-        mockMvc.perform(post("/api/auth/inscription")
-                        .contentType("application/json")
-                        .content(body))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.pseudo").value("testuser"))
-                .andExpect(jsonPath("$.email").value("test@test.com"))
-                .andExpect(jsonPath("$.role").value("USER"))
-                .andExpect(jsonPath("$.motDePasseHash").doesNotExist());
-    }
+    mockMvc.perform(post("/api/auth/inscription")
+        .contentType("application/json")
+        .content(body))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.pseudo").value("testuser"))
+        .andExpect(jsonPath("$.email").value("test@test.com"))
+        .andExpect(jsonPath("$.role").value("USER"))
+        .andExpect(jsonPath("$.motDePasseHash").doesNotExist());
+  }
 
-    @Test
-    @DisplayName("Doit retourner 400 lors d'une inscription invalide")
-    void shouldReturnBadRequestWhenRegisterInvalid() throws Exception {
-        String body = """
-                {
-                  "pseudo": "",
-                  "email": "email-invalide",
-                  "motDePasse": "Password"
-                }
-                """;
+  @Test
+  @DisplayName("Doit retourner 400 lors d'une inscription invalide")
+  void shouldReturnBadRequestWhenRegisterInvalid() throws Exception {
+    String body = """
+        {
+          "pseudo": "",
+          "email": "email-invalide",
+          "motDePasse": "Password"
+        }
+        """;
 
-        mockMvc.perform(post("/api/auth/inscription")
-                        .contentType("application/json")
-                        .content(body))
-                .andExpect(status().isBadRequest());
-    }
+    mockMvc.perform(post("/api/auth/inscription")
+        .contentType("application/json")
+        .content(body))
+        .andExpect(status().isBadRequest());
+  }
 
-    @Test
-    @DisplayName("Doit retourner 200 lors d'une connexion valide")
-    void shouldLoginUser() throws Exception {
-        ConnexionResponse response = new ConnexionResponse(
-                "mocked-token",
-                "Bearer",
-                "testuser",
-                "USER"
-        );
+  @Test
+  @DisplayName("Doit retourner 200 lors d'une connexion valide")
+  void shouldLoginUser() throws Exception {
+    ConnexionResponse response = new ConnexionResponse(
+        "mocked-token",
+        "Bearer",
+        "testuser",
+        "USER");
 
-        when(utilisateurService.connecterUtilisateur(ArgumentMatchers.any())).thenReturn(response);
+    when(utilisateurService.connecterUtilisateur(ArgumentMatchers.any())).thenReturn(response);
 
-        String body = """
-                {
-                  "email": "test@test.com",
-                  "motDePasse": "Password123"
-                }
-                """;
+    String body = """
+        {
+          "email": "test@test.com",
+          "motDePasse": "Password123"
+        }
+        """;
 
-        mockMvc.perform(post("/api/auth/connexion")
-                        .contentType("application/json")
-                        .content(body))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").value("mocked-token"))
-                .andExpect(jsonPath("$.type").value("Bearer"))
-                .andExpect(jsonPath("$.pseudo").value("testuser"))
-                .andExpect(jsonPath("$.role").value("USER"));
-    }
+    mockMvc.perform(post("/api/auth/connexion")
+        .contentType("application/json")
+        .content(body))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.token").value("mocked-token"))
+        .andExpect(jsonPath("$.type").value("Bearer"))
+        .andExpect(jsonPath("$.pseudo").value("testuser"))
+        .andExpect(jsonPath("$.role").value("USER"));
+  }
 
-    @Test
-    @DisplayName("Doit retourner 400 lors d'une connexion invalide")
-    void shouldReturnBadRequestWhenLoginInvalid() throws Exception {
-        String body = """
-                {
-                  "email": "email-invalide",
-                  "motDePasse": ""
-                }
-                """;
+  @Test
+  @DisplayName("Doit retourner 400 lors d'une connexion invalide")
+  void shouldReturnBadRequestWhenLoginInvalid() throws Exception {
+    String body = """
+        {
+          "email": "email-invalide",
+          "motDePasse": ""
+        }
+        """;
 
-        mockMvc.perform(post("/api/auth/connexion")
-                        .contentType("application/json")
-                        .content(body))
-                .andExpect(status().isBadRequest());
-    }
+    mockMvc.perform(post("/api/auth/connexion")
+        .contentType("application/json")
+        .content(body))
+        .andExpect(status().isBadRequest());
+  }
 }

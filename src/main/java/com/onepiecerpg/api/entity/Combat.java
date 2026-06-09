@@ -4,37 +4,41 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.PositiveOrZero;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Table(name = "combat")
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Combat {
-    
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "progression_joueur_id", nullable = false)
-    private ProgressionJoueur progressionJoueur;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "ennemi_id", nullable = false)
-    private Ennemi ennemi;
+  @ManyToOne(optional = false)
+  @JoinColumn(name = "progression_joueur_id", nullable = false)
+  private ProgressionJoueur progressionJoueur;
 
-    @PositiveOrZero
-    @Column(nullable = false)
-    private int vieEnnemiActuelle;
+  @ManyToOne(optional = false)
+  @JoinColumn(name = "ennemi_id", nullable = false)
+  private Ennemi ennemi;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private StatutCombat statut = StatutCombat.EN_COURS;
+  @PositiveOrZero
+  @Column(nullable = false)
+  private int vieEnnemiActuelle;
 
-    @Column(nullable = false)
-    private LocalDateTime dateCreation = LocalDateTime.now();
+  @Builder.Default
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private StatutCombat statut = StatutCombat.EN_COURS;
 
-    private LocalDateTime dateFin;
+  @Builder.Default
+  @Column(nullable = false)
+  private LocalDateTime dateCreation = LocalDateTime.now();
+
+  private LocalDateTime dateFin;
 }

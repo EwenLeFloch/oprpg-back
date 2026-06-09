@@ -35,159 +35,152 @@ import com.onepiecerpg.api.security.JwtAuthenticationFilter;
 import com.onepiecerpg.api.service.JwtService;
 import com.onepiecerpg.api.service.NewsService;
 
-@WebMvcTest(
-        controllers = NewsController.class,
-        excludeAutoConfiguration = {
-                SecurityAutoConfiguration.class,
-                SecurityFilterAutoConfiguration.class
-        }
-)
+@WebMvcTest(controllers = NewsController.class, excludeAutoConfiguration = {
+    SecurityAutoConfiguration.class,
+    SecurityFilterAutoConfiguration.class
+})
 @Import({
-        GlobalExceptionHandler.class,
-        ClockConfig.class
+    GlobalExceptionHandler.class,
+    ClockConfig.class
 })
 @AutoConfigureMockMvc(addFilters = false)
 class NewsControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+  @Autowired
+  private MockMvc mockMvc;
 
-    @MockitoBean
-    private NewsService newsService;
+  @MockitoBean
+  private NewsService newsService;
 
-    @MockitoBean
-    private JwtService jwtService;
+  @MockitoBean
+  private JwtService jwtService;
 
-    @MockitoBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
+  @MockitoBean
+  private JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @Test
-    @DisplayName("Doit retourner toutes les news")
-    void shouldGetAllNews() throws Exception {
-        NewsResponse news = new NewsResponse(
-                1L,
-                "Bienvenue",
-                "Bienvenue sur One Piece RPG",
-                LocalDateTime.of(2026, Month.JUNE, 8, 10, 0)
-        );
+  @Test
+  @DisplayName("Doit retourner toutes les news")
+  void shouldGetAllNews() throws Exception {
+    NewsResponse news = new NewsResponse(
+        1L,
+        "Bienvenue",
+        "Bienvenue sur One Piece RPG",
+        LocalDateTime.of(2026, Month.JUNE, 8, 10, 0));
 
-        when(newsService.recupererToutesLesNews()).thenReturn(List.of(news));
+    when(newsService.recupererToutesLesNews()).thenReturn(List.of(news));
 
-        mockMvc.perform(get("/api/news"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].titre").value("Bienvenue"))
-                .andExpect(jsonPath("$[0].contenu").value("Bienvenue sur One Piece RPG"));
-    }
+    mockMvc.perform(get("/api/news"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].id").value(1))
+        .andExpect(jsonPath("$[0].titre").value("Bienvenue"))
+        .andExpect(jsonPath("$[0].contenu").value("Bienvenue sur One Piece RPG"));
+  }
 
-    @Test
-    @DisplayName("Doit retourner une news par id")
-    void shouldGetNewsById() throws Exception {
-        NewsResponse news = new NewsResponse(
-                1L,
-                "Patch note",
-                "Ajout du système de combat",
-                LocalDateTime.of(2026, Month.JUNE, 8, 10, 0)
-        );
+  @Test
+  @DisplayName("Doit retourner une news par id")
+  void shouldGetNewsById() throws Exception {
+    NewsResponse news = new NewsResponse(
+        1L,
+        "Patch note",
+        "Ajout du système de combat",
+        LocalDateTime.of(2026, Month.JUNE, 8, 10, 0));
 
-        when(newsService.recupererNewsParId(1L)).thenReturn(news);
+    when(newsService.recupererNewsParId(1L)).thenReturn(news);
 
-        mockMvc.perform(get("/api/news/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.titre").value("Patch note"))
-                .andExpect(jsonPath("$.contenu").value("Ajout du système de combat"));
-    }
+    mockMvc.perform(get("/api/news/1"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(1))
+        .andExpect(jsonPath("$.titre").value("Patch note"))
+        .andExpect(jsonPath("$.contenu").value("Ajout du système de combat"));
+  }
 
-    @Test
-    @DisplayName("Doit retourner 404 si la news est introuvable")
-    void shouldReturnNotFoundWhenNewsDoesNotExist() throws Exception {
-        when(newsService.recupererNewsParId(1L))
-                .thenThrow(new RessourceIntrouvableException("News introuvable"));
+  @Test
+  @DisplayName("Doit retourner 404 si la news est introuvable")
+  void shouldReturnNotFoundWhenNewsDoesNotExist() throws Exception {
+    when(newsService.recupererNewsParId(1L))
+        .thenThrow(new RessourceIntrouvableException("News introuvable"));
 
-        mockMvc.perform(get("/api/news/1"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("News introuvable"));
-    }
+    mockMvc.perform(get("/api/news/1"))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.message").value("News introuvable"));
+  }
 
-    @Test
-    @DisplayName("Doit créer une news")
-    void shouldCreateNews() throws Exception {
-        NewsResponse response = new NewsResponse(
-                1L,
-                "Nouvelle île",
-                "Dawn Island est disponible",
-                LocalDateTime.of(2026, Month.JUNE, 8, 10, 0)
-        );
+  @Test
+  @DisplayName("Doit créer une news")
+  void shouldCreateNews() throws Exception {
+    NewsResponse response = new NewsResponse(
+        1L,
+        "Nouvelle île",
+        "Dawn Island est disponible",
+        LocalDateTime.of(2026, Month.JUNE, 8, 10, 0));
 
-        when(newsService.creerNews(any())).thenReturn(response);
+    when(newsService.creerNews(any())).thenReturn(response);
 
-        String body = """
-                {
-                  "titre": "Nouvelle île",
-                  "contenu": "Dawn Island est disponible"
-                }
-                """;
+    String body = """
+        {
+          "titre": "Nouvelle île",
+          "contenu": "Dawn Island est disponible"
+        }
+        """;
 
-        mockMvc.perform(post("/api/news")
-                        .contentType("application/json")
-                        .content(body))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.titre").value("Nouvelle île"))
-                .andExpect(jsonPath("$.contenu").value("Dawn Island est disponible"));
-    }
+    mockMvc.perform(post("/api/news")
+        .contentType("application/json")
+        .content(body))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.titre").value("Nouvelle île"))
+        .andExpect(jsonPath("$.contenu").value("Dawn Island est disponible"));
+  }
 
-    @Test
-    @DisplayName("Doit retourner 400 lors de la création d'une news invalide")
-    void shouldReturnBadRequestWhenCreatingInvalidNews() throws Exception {
-        String body = """
-                {
-                  "titre": "",
-                  "contenu": ""
-                }
-                """;
+  @Test
+  @DisplayName("Doit retourner 400 lors de la création d'une news invalide")
+  void shouldReturnBadRequestWhenCreatingInvalidNews() throws Exception {
+    String body = """
+        {
+          "titre": "",
+          "contenu": ""
+        }
+        """;
 
-        mockMvc.perform(post("/api/news")
-                        .contentType("application/json")
-                        .content(body))
-                .andExpect(status().isBadRequest());
-    }
+    mockMvc.perform(post("/api/news")
+        .contentType("application/json")
+        .content(body))
+        .andExpect(status().isBadRequest());
+  }
 
-    @Test
-    @DisplayName("Doit modifier une news")
-    void shouldUpdateNews() throws Exception {
-        NewsResponse response = new NewsResponse(
-                1L,
-                "Titre modifié",
-                "Contenu modifié",
-                LocalDateTime.of(2026, Month.JUNE, 8, 10, 0)
-        );
+  @Test
+  @DisplayName("Doit modifier une news")
+  void shouldUpdateNews() throws Exception {
+    NewsResponse response = new NewsResponse(
+        1L,
+        "Titre modifié",
+        "Contenu modifié",
+        LocalDateTime.of(2026, Month.JUNE, 8, 10, 0));
 
-        when(newsService.modifierNews(eq(1L), any())).thenReturn(response);
+    when(newsService.modifierNews(eq(1L), any())).thenReturn(response);
 
-        String body = """
-                {
-                  "titre": "Titre modifié",
-                  "contenu": "Contenu modifié"
-                }
-                """;
+    String body = """
+        {
+          "titre": "Titre modifié",
+          "contenu": "Contenu modifié"
+        }
+        """;
 
-        mockMvc.perform(put("/api/news/1")
-                        .contentType("application/json")
-                        .content(body))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.titre").value("Titre modifié"))
-                .andExpect(jsonPath("$.contenu").value("Contenu modifié"));
-    }
+    mockMvc.perform(put("/api/news/1")
+        .contentType("application/json")
+        .content(body))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.titre").value("Titre modifié"))
+        .andExpect(jsonPath("$.contenu").value("Contenu modifié"));
+  }
 
-    @Test
-    @DisplayName("Doit supprimer une news")
-    void shouldDeleteNews() throws Exception {
-        doNothing().when(newsService).supprimerNews(1L);
+  @Test
+  @DisplayName("Doit supprimer une news")
+  void shouldDeleteNews() throws Exception {
+    doNothing().when(newsService).supprimerNews(1L);
 
-        mockMvc.perform(delete("/api/news/1"))
-                .andExpect(status().isNoContent());
+    mockMvc.perform(delete("/api/news/1"))
+        .andExpect(status().isNoContent());
 
-        verify(newsService).supprimerNews(1L);
-    }
+    verify(newsService).supprimerNews(1L);
+  }
 }

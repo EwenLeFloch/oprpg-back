@@ -19,90 +19,88 @@ import com.onepiecerpg.api.repository.ZoneRepository;
 @Service
 public class ProgressionJoueurService {
 
-    private static final String NOM_PERSONNAGE_DEPART = "Luffy";
-    private static final String NOM_ZONE_DEPART = "Village Fuschia";
+  private static final String NOM_PERSONNAGE_DEPART = "Luffy";
+  private static final String NOM_ZONE_DEPART = "Village Fuschia";
 
-    private final ProgressionJoueurRepository progressionJoueurRepository;
-    private final PersonnageRepository personnageRepository;
-    private final UtilisateurRepository utilisateurRepository;
-    private final FactionRepository factionRepository;
-    private final ZoneRepository zoneRepository;
+  private final ProgressionJoueurRepository progressionJoueurRepository;
+  private final PersonnageRepository personnageRepository;
+  private final UtilisateurRepository utilisateurRepository;
+  private final FactionRepository factionRepository;
+  private final ZoneRepository zoneRepository;
 
-    public ProgressionJoueurService(
-            ProgressionJoueurRepository progressionJoueurRepository,
-            PersonnageRepository personnageRepository,
-            UtilisateurRepository utilisateurRepository,
-            FactionRepository factionRepository,
-            ZoneRepository zoneRepository
-    ) {
-        this.progressionJoueurRepository = progressionJoueurRepository;
-        this.personnageRepository = personnageRepository;
-        this.utilisateurRepository = utilisateurRepository;
-        this.factionRepository = factionRepository;
-        this.zoneRepository = zoneRepository;
+  public ProgressionJoueurService(
+      ProgressionJoueurRepository progressionJoueurRepository,
+      PersonnageRepository personnageRepository,
+      UtilisateurRepository utilisateurRepository,
+      FactionRepository factionRepository,
+      ZoneRepository zoneRepository) {
+    this.progressionJoueurRepository = progressionJoueurRepository;
+    this.personnageRepository = personnageRepository;
+    this.utilisateurRepository = utilisateurRepository;
+    this.factionRepository = factionRepository;
+    this.zoneRepository = zoneRepository;
+  }
+
+  public ProgressionJoueur creerProgressionInitiale(Utilisateur utilisateur) {
+    Personnage personnage = personnageRepository.findByNom(NOM_PERSONNAGE_DEPART)
+        .orElseThrow(() -> new RessourceIntrouvableException("Personnage de départ non trouvé"));
+
+    Zone zone = zoneRepository.findByNom(NOM_ZONE_DEPART)
+        .orElseThrow(() -> new RessourceIntrouvableException("Zone de départ non trouvée"));
+
+    ProgressionJoueur progression = new ProgressionJoueur();
+    progression.setUtilisateur(utilisateur);
+    progression.setPersonnage(personnage);
+    progression.setZone(zone);
+    progression.setVieActuelle(progression.getVieMax());
+    progression.setEnduranceActuelle(progression.getEnduranceMax());
+
+    return progressionJoueurRepository.save(progression);
+  }
+
+  public ProgressionJoueurResponse getProgressionConnectee() {
+    ProgressionJoueur progression = recupererProgressionConnectee();
+    return convertirEnResponse(progression);
+  }
+
+  public ProgressionJoueurResponse choisirFaction(Long factionId) {
+    ProgressionJoueur progression = recupererProgressionConnectee();
+
+    if (progression.getFaction() != null) {
+      throw new IllegalStateException("La faction a déjà été choisie");
     }
 
-    public ProgressionJoueur creerProgressionInitiale(Utilisateur utilisateur) {
-        Personnage personnage = personnageRepository.findByNom(NOM_PERSONNAGE_DEPART)
-                .orElseThrow(() -> new RessourceIntrouvableException("Personnage de départ non trouvé"));
+    Faction faction = factionRepository.findById(factionId)
+        .orElseThrow(() -> new RessourceIntrouvableException("Faction non trouvée"));
 
-        Zone zone = zoneRepository.findByNom(NOM_ZONE_DEPART)
-                .orElseThrow(() -> new RessourceIntrouvableException("Zone de départ non trouvée"));
+    progression.setFaction(faction);
 
-        ProgressionJoueur progression = new ProgressionJoueur();
-        progression.setUtilisateur(utilisateur);
-        progression.setPersonnage(personnage);
-        progression.setZone(zone);
-        progression.setVieActuelle(progression.getVieMax());
-        progression.setEnduranceActuelle(progression.getEnduranceMax());
+    return convertirEnResponse(progressionJoueurRepository.save(progression));
+  }
 
-        return progressionJoueurRepository.save(progression);
-    }
+  private ProgressionJoueur recupererProgressionConnectee() {
+    String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
-    public ProgressionJoueurResponse getProgressionConnectee() {
-        ProgressionJoueur progression = recupererProgressionConnectee();
-        return convertirEnResponse(progression);
-    }
+    Utilisateur utilisateur = utilisateurRepository.findByEmail(email)
+        .orElseThrow(() -> new RessourceIntrouvableException("Utilisateur non trouvé"));
 
-    public ProgressionJoueurResponse choisirFaction(Long factionId) {
-        ProgressionJoueur progression = recupererProgressionConnectee();
+    return progressionJoueurRepository.findByUtilisateur(utilisateur)
+        .orElseThrow(() -> new RessourceIntrouvableException("Progression du joueur non trouvée"));
+  }
 
-        if (progression.getFaction() != null) {
-            throw new IllegalStateException("La faction a déjà été choisie");
-        }
-
-        Faction faction = factionRepository.findById(factionId)
-                .orElseThrow(() -> new RessourceIntrouvableException("Faction non trouvée"));
-
-        progression.setFaction(faction);
-
-        return convertirEnResponse(progressionJoueurRepository.save(progression));
-    }
-
-    private ProgressionJoueur recupererProgressionConnectee() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-
-        Utilisateur utilisateur = utilisateurRepository.findByEmail(email)
-                .orElseThrow(() -> new RessourceIntrouvableException("Utilisateur non trouvé"));
-
-        return progressionJoueurRepository.findByUtilisateur(utilisateur)
-                .orElseThrow(() -> new RessourceIntrouvableException("Progression du joueur non trouvée"));
-    }
-
-    private ProgressionJoueurResponse convertirEnResponse(ProgressionJoueur progression) {
-        return new ProgressionJoueurResponse(
-                progression.getId(),
-                progression.getNiveau(),
-                progression.getExperience(),
-                progression.getEnduranceMax(),
-                progression.getEnduranceActuelle(),
-                progression.getPuissance(),
-                progression.getVieMax(),
-                progression.getVieActuelle(),
-                progression.getBerries(),
-                progression.getPrime(),
-                progression.getPersonnage().getNom(),
-                progression.getFaction() == null ? null : progression.getFaction().getNom()
-        );
-    }
+  private ProgressionJoueurResponse convertirEnResponse(ProgressionJoueur progression) {
+    return new ProgressionJoueurResponse(
+        progression.getId(),
+        progression.getNiveau(),
+        progression.getExperience(),
+        progression.getEnduranceMax(),
+        progression.getEnduranceActuelle(),
+        progression.getPuissance(),
+        progression.getVieMax(),
+        progression.getVieActuelle(),
+        progression.getBerries(),
+        progression.getPrime(),
+        progression.getPersonnage().getNom(),
+        progression.getFaction() == null ? null : progression.getFaction().getNom());
+  }
 }

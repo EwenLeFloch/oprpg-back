@@ -10,23 +10,23 @@ import com.onepiecerpg.api.repository.FactionRepository;
 
 @Service
 public class FactionService {
-    private final FactionRepository factionRepository;
+  private final FactionRepository factionRepository;
 
-    public FactionService(FactionRepository factionRepository) {
-        this.factionRepository = factionRepository;
-    }
+  public FactionService(FactionRepository factionRepository) {
+    this.factionRepository = factionRepository;
+  }
 
-    public List<Faction> recupererToutesLesFactions() {
-        return factionRepository.findAll();
-    }
+  public List<Faction> recupererToutesLesFactions() {
+    return factionRepository.findAll();
+  }
 
-    public Faction recupererFactionParId(Long id) {
-        return factionRepository.findById(id)
-            .orElseThrow(() -> new RessourceIntrouvableException("Faction non trouvée"));
-    }
+  public Faction recupererFactionParId(Long id) {
+    return factionRepository.findById(id)
+        .orElseThrow(() -> new RessourceIntrouvableException("Faction non trouvée"));
+  }
 
-    public Faction recupererFactionParNom(String nom) {
-        return factionRepository.findByNom(nom)
-            .orElseThrow(() -> new RessourceIntrouvableException("Faction non trouvée"));
-    }
+  public Faction recupererFactionParNom(String nom) {
+    return factionRepository.findByNom(nom)
+        .orElseThrow(() -> new RessourceIntrouvableException("Faction non trouvée"));
+  }
 }

@@ -15,53 +15,53 @@ import com.onepiecerpg.api.repository.NewsRepository;
 @Service
 public class NewsService {
 
-    private final NewsRepository newsRepository;
-    private final Clock clock;
+  private final NewsRepository newsRepository;
+  private final Clock clock;
 
-    public NewsService(NewsRepository newsRepository, Clock clock) {
-        this.newsRepository = newsRepository;
-        this.clock = clock;
+  public NewsService(NewsRepository newsRepository, Clock clock) {
+    this.newsRepository = newsRepository;
+    this.clock = clock;
+  }
+
+  public List<NewsResponse> recupererToutesLesNews() {
+    return newsRepository.findAll()
+        .stream()
+        .map(NewsResponse::from)
+        .toList();
+  }
+
+  public NewsResponse recupererNewsParId(Long newsId) {
+    return NewsResponse.from(recupererNews(newsId));
+  }
+
+  public NewsResponse creerNews(NewsRequest request) {
+    News news = new News();
+    news.setTitre(request.titre());
+    news.setContenu(request.contenu());
+    news.setDateCreation(LocalDateTime.now(clock));
+
+    return NewsResponse.from(newsRepository.save(news));
+  }
+
+  public NewsResponse modifierNews(Long newsId, NewsRequest request) {
+    News news = recupererNews(newsId);
+
+    news.setTitre(request.titre());
+    news.setContenu(request.contenu());
+
+    return NewsResponse.from(newsRepository.save(news));
+  }
+
+  public void supprimerNews(Long newsId) {
+    if (!newsRepository.existsById(newsId)) {
+      throw new RessourceIntrouvableException("News introuvable");
     }
 
-    public List<NewsResponse> recupererToutesLesNews() {
-        return newsRepository.findAll()
-                .stream()
-                .map(NewsResponse::from)
-                .toList();
-    }
+    newsRepository.deleteById(newsId);
+  }
 
-    public NewsResponse recupererNewsParId(Long newsId) {
-        return NewsResponse.from(recupererNews(newsId));
-    }
-
-    public NewsResponse creerNews(NewsRequest request) {
-        News news = new News();
-        news.setTitre(request.titre());
-        news.setContenu(request.contenu());
-        news.setDateCreation(LocalDateTime.now(clock));
-
-        return NewsResponse.from(newsRepository.save(news));
-    }
-
-    public NewsResponse modifierNews(Long newsId, NewsRequest request) {
-        News news = recupererNews(newsId);
-
-        news.setTitre(request.titre());
-        news.setContenu(request.contenu());
-
-        return NewsResponse.from(newsRepository.save(news));
-    }
-
-    public void supprimerNews(Long newsId) {
-        if (!newsRepository.existsById(newsId)) {
-            throw new RessourceIntrouvableException("News introuvable");
-        }
-
-        newsRepository.deleteById(newsId);
-    }
-
-    private News recupererNews(Long newsId) {
-        return newsRepository.findById(newsId)
-                .orElseThrow(() -> new RessourceIntrouvableException("News introuvable"));
-    }
+  private News recupererNews(Long newsId) {
+    return newsRepository.findById(newsId)
+        .orElseThrow(() -> new RessourceIntrouvableException("News introuvable"));
+  }
 }

@@ -9,7 +9,6 @@ public record CombatResponse(
     int vieEnnemiActuelle,
 
     int vieJoueurActuelle,
-    StatutCombat statut
-) {
+    StatutCombat statut) {
 
 }

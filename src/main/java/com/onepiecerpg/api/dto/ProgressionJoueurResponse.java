@@ -16,9 +16,8 @@ public record ProgressionJoueurResponse(
 
     int berries,
     Long prime,
-    
+
     String personnage,
-    String faction
-) {
-    
+    String faction) {
+
 }

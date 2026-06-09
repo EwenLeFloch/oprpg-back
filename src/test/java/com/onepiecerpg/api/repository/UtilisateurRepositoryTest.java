@@ -13,37 +13,37 @@ import com.onepiecerpg.api.entity.Utilisateur;
 @DataJpaTest
 class UtilisateurRepositoryTest {
 
-    @Autowired
-    private UtilisateurRepository utilisateurRepository;
+  @Autowired
+  private UtilisateurRepository utilisateurRepository;
 
-    @Test
-    void shouldFindByEmail() {
-        Utilisateur utilisateur = utilisateur();
-        utilisateurRepository.save(utilisateur);
+  @Test
+  void shouldFindByEmail() {
+    Utilisateur utilisateur = utilisateur();
+    utilisateurRepository.save(utilisateur);
 
-        Optional<Utilisateur> result = utilisateurRepository.findByEmail("luffy@test.com");
+    Optional<Utilisateur> result = utilisateurRepository.findByEmail("luffy@test.com");
 
-        assertThat(result).isPresent();
-        assertThat(result.get().getPseudo()).isEqualTo("luffy");
-    }
+    assertThat(result).isPresent();
+    assertThat(result.get().getPseudo()).isEqualTo("luffy");
+  }
 
-    @Test
-    void shouldFindByPseudo() {
-        Utilisateur utilisateur = utilisateur();
-        utilisateurRepository.save(utilisateur);
+  @Test
+  void shouldFindByPseudo() {
+    Utilisateur utilisateur = utilisateur();
+    utilisateurRepository.save(utilisateur);
 
-        Optional<Utilisateur> result = utilisateurRepository.findByPseudo("luffy");
+    Optional<Utilisateur> result = utilisateurRepository.findByPseudo("luffy");
 
-        assertThat(result).isPresent();
-        assertThat(result.get().getEmail()).isEqualTo("luffy@test.com");
-    }
+    assertThat(result).isPresent();
+    assertThat(result.get().getEmail()).isEqualTo("luffy@test.com");
+  }
 
-    private Utilisateur utilisateur() {
-        Utilisateur utilisateur = new Utilisateur();
-        utilisateur.setPseudo("luffy");
-        utilisateur.setEmail("luffy@test.com");
-        utilisateur.setMotDePasseHash("hashed-password");
-        utilisateur.setRole("USER");
-        return utilisateur;
-    }
+  private Utilisateur utilisateur() {
+    Utilisateur utilisateur = new Utilisateur();
+    utilisateur.setPseudo("luffy");
+    utilisateur.setEmail("luffy@test.com");
+    utilisateur.setMotDePasseHash("hashed-password");
+    utilisateur.setRole("USER");
+    return utilisateur;
+  }
 }

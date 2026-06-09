@@ -16,38 +16,37 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/news")
 public class NewsController {
 
-    private final NewsService newsService;
+  private final NewsService newsService;
 
-    public NewsController(NewsService newsService) {
-        this.newsService = newsService;
-    }
+  public NewsController(NewsService newsService) {
+    this.newsService = newsService;
+  }
 
-    @GetMapping
-    public ResponseEntity<List<NewsResponse>> recupererToutesLesNews() {
-        return ResponseEntity.ok(newsService.recupererToutesLesNews());
-    }
+  @GetMapping
+  public ResponseEntity<List<NewsResponse>> recupererToutesLesNews() {
+    return ResponseEntity.ok(newsService.recupererToutesLesNews());
+  }
 
-    @GetMapping("/{newsId}")
-    public ResponseEntity<NewsResponse> recupererNewsParId(@PathVariable Long newsId) {
-        return ResponseEntity.ok(newsService.recupererNewsParId(newsId));
-    }
+  @GetMapping("/{newsId}")
+  public ResponseEntity<NewsResponse> recupererNewsParId(@PathVariable Long newsId) {
+    return ResponseEntity.ok(newsService.recupererNewsParId(newsId));
+  }
 
-    @PostMapping
-    public ResponseEntity<NewsResponse> creerNews(@Valid @RequestBody NewsRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(newsService.creerNews(request));
-    }
+  @PostMapping
+  public ResponseEntity<NewsResponse> creerNews(@Valid @RequestBody NewsRequest request) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(newsService.creerNews(request));
+  }
 
-    @PutMapping("/{newsId}")
-    public ResponseEntity<NewsResponse> modifierNews(
-        @PathVariable Long newsId,
-        @Valid @RequestBody NewsRequest request
-    ) {
-        return ResponseEntity.ok(newsService.modifierNews(newsId, request));
-    }
+  @PutMapping("/{newsId}")
+  public ResponseEntity<NewsResponse> modifierNews(
+      @PathVariable Long newsId,
+      @Valid @RequestBody NewsRequest request) {
+    return ResponseEntity.ok(newsService.modifierNews(newsId, request));
+  }
 
-    @DeleteMapping("/{newsId}")
-    public ResponseEntity<Void> supprimerNews(@PathVariable Long newsId) {
-        newsService.supprimerNews(newsId);
-        return ResponseEntity.noContent().build();
-    }
+  @DeleteMapping("/{newsId}")
+  public ResponseEntity<Void> supprimerNews(@PathVariable Long newsId) {
+    newsService.supprimerNews(newsId);
+    return ResponseEntity.noContent().build();
+  }
 }

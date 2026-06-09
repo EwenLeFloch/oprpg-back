@@ -3,22 +3,24 @@ package com.onepiecerpg.api.entity;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Table(name = "news")
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class News {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    private String titre;
+  private String titre;
 
-    @Column(length = 5000)
-    private String contenu;
+  @Column(length = 5000)
+  private String contenu;
 
-    private LocalDateTime dateCreation;
+  private LocalDateTime dateCreation;
 }

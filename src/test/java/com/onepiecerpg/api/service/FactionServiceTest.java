@@ -15,39 +15,39 @@ import com.onepiecerpg.api.repository.FactionRepository;
 
 class FactionServiceTest {
 
-    private FactionRepository factionRepository;
-    private FactionService factionService;
+  private FactionRepository factionRepository;
+  private FactionService factionService;
 
-    @BeforeEach
-    void setUp() {
-        factionRepository = mock(FactionRepository.class);
-        factionService = new FactionService(factionRepository);
-    }
+  @BeforeEach
+  void setUp() {
+    factionRepository = mock(FactionRepository.class);
+    factionService = new FactionService(factionRepository);
+  }
 
-    @Test
-    void shouldGetAllFactions() {
-        when(factionRepository.findAll()).thenReturn(List.of(new Faction(), new Faction()));
+  @Test
+  void shouldGetAllFactions() {
+    when(factionRepository.findAll()).thenReturn(List.of(new Faction(), new Faction()));
 
-        assertThat(factionService.recupererToutesLesFactions()).hasSize(2);
-    }
+    assertThat(factionService.recupererToutesLesFactions()).hasSize(2);
+  }
 
-    @Test
-    void shouldGetFactionById() {
-        Faction faction = new Faction();
-        faction.setId(1L);
-        faction.setNom("Pirate");
+  @Test
+  void shouldGetFactionById() {
+    Faction faction = new Faction();
+    faction.setId(1L);
+    faction.setNom("Pirate");
 
-        when(factionRepository.findById(1L)).thenReturn(Optional.of(faction));
+    when(factionRepository.findById(1L)).thenReturn(Optional.of(faction));
 
-        assertThat(factionService.recupererFactionParId(1L).getNom()).isEqualTo("Pirate");
-    }
+    assertThat(factionService.recupererFactionParId(1L).getNom()).isEqualTo("Pirate");
+  }
 
-    @Test
-    void shouldThrowWhenFactionNotFoundById() {
-        when(factionRepository.findById(1L)).thenReturn(Optional.empty());
+  @Test
+  void shouldThrowWhenFactionNotFoundById() {
+    when(factionRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> factionService.recupererFactionParId(1L))
-                .isInstanceOf(RessourceIntrouvableException.class)
-                .hasMessage("Faction non trouvée");
-    }
+    assertThatThrownBy(() -> factionService.recupererFactionParId(1L))
+        .isInstanceOf(RessourceIntrouvableException.class)
+        .hasMessage("Faction non trouvée");
+  }
 }

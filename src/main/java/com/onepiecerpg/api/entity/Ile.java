@@ -2,28 +2,32 @@ package com.onepiecerpg.api.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+
 @Entity
 @Table(name = "ile")
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Ile {
-    
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String nom;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String imagePath;
+  @Column(nullable = false, unique = true)
+  private String nom;
 
-    @Column()
-    private String description;
+  @Column(nullable = false, unique = true)
+  private String imagePath;
 
-    @Min(1)
-    @Column(nullable = false)
-    private int niveauRequis = 1;
+  @Column()
+  private String description;
+
+  @Builder.Default
+  @Min(1)
+  @Column(nullable = false)
+  private int niveauRequis = 1;
 }

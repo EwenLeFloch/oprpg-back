@@ -16,25 +16,23 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final UtilisateurService utilisateurService;
+  private final UtilisateurService utilisateurService;
 
-    public AuthController(UtilisateurService utilisateurService) {
-        this.utilisateurService = utilisateurService;
-    }
+  public AuthController(UtilisateurService utilisateurService) {
+    this.utilisateurService = utilisateurService;
+  }
 
-    @PostMapping("/inscription")
-    public ResponseEntity<UtilisateurResponseDto> inscription(
-            @Valid @RequestBody InscriptionRequest request
-    ) {
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(utilisateurService.creerUtilisateur(request));
-    }
+  @PostMapping("/inscription")
+  public ResponseEntity<UtilisateurResponseDto> inscription(
+      @Valid @RequestBody InscriptionRequest request) {
+    return ResponseEntity
+        .status(HttpStatus.CREATED)
+        .body(utilisateurService.creerUtilisateur(request));
+  }
 
-    @PostMapping("/connexion")
-    public ResponseEntity<ConnexionResponse> connexion(
-            @Valid @RequestBody ConnexionRequest request
-    ) {
-        return ResponseEntity.ok(utilisateurService.connecterUtilisateur(request));
-    }
+  @PostMapping("/connexion")
+  public ResponseEntity<ConnexionResponse> connexion(
+      @Valid @RequestBody ConnexionRequest request) {
+    return ResponseEntity.ok(utilisateurService.connecterUtilisateur(request));
+  }
 }

@@ -24,85 +24,81 @@ import com.onepiecerpg.api.security.JwtAuthenticationFilter;
 import com.onepiecerpg.api.service.JwtService;
 import com.onepiecerpg.api.service.ProgressionJoueurService;
 
-@WebMvcTest(
-        controllers = ProgressionJoueurController.class,
-        excludeAutoConfiguration = {
-                SecurityAutoConfiguration.class,
-                SecurityFilterAutoConfiguration.class
-        }
-)
+@WebMvcTest(controllers = ProgressionJoueurController.class, excludeAutoConfiguration = {
+    SecurityAutoConfiguration.class,
+    SecurityFilterAutoConfiguration.class
+})
 @Import({
-        GlobalExceptionHandler.class,
-        ClockConfig.class
+    GlobalExceptionHandler.class,
+    ClockConfig.class
 })
 @AutoConfigureMockMvc(addFilters = false)
 class ProgressionJoueurControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+  @Autowired
+  private MockMvc mockMvc;
 
-    @MockitoBean
-    private ProgressionJoueurService progressionJoueurService;
+  @MockitoBean
+  private ProgressionJoueurService progressionJoueurService;
 
-    @MockitoBean
-    private JwtService jwtService;
+  @MockitoBean
+  private JwtService jwtService;
 
-    @MockitoBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
+  @MockitoBean
+  private JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @Test
-    @DisplayName("Doit retourner la progression du joueur connecté")
-    void shouldGetConnectedProgression() throws Exception {
-        ProgressionJoueurResponse response = progressionResponse(null);
+  @Test
+  @DisplayName("Doit retourner la progression du joueur connecté")
+  void shouldGetConnectedProgression() throws Exception {
+    ProgressionJoueurResponse response = progressionResponse(null);
 
-        when(progressionJoueurService.getProgressionConnectee()).thenReturn(response);
+    when(progressionJoueurService.getProgressionConnectee()).thenReturn(response);
 
-        mockMvc.perform(get("/api/progression/me"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.niveau").value(1))
-                .andExpect(jsonPath("$.experience").value(0))
-                .andExpect(jsonPath("$.personnage").value("Luffy"))
-                .andExpect(jsonPath("$.faction").doesNotExist());
-    }
+    mockMvc.perform(get("/api/progression/me"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(1))
+        .andExpect(jsonPath("$.niveau").value(1))
+        .andExpect(jsonPath("$.experience").value(0))
+        .andExpect(jsonPath("$.personnage").value("Luffy"))
+        .andExpect(jsonPath("$.faction").doesNotExist());
+  }
 
-    @Test
-    @DisplayName("Doit choisir une faction")
-    void shouldChooseFaction() throws Exception {
-        ProgressionJoueurResponse response = progressionResponse("Pirate");
+  @Test
+  @DisplayName("Doit choisir une faction")
+  void shouldChooseFaction() throws Exception {
+    ProgressionJoueurResponse response = progressionResponse("Pirate");
 
-        when(progressionJoueurService.choisirFaction(1L)).thenReturn(response);
+    when(progressionJoueurService.choisirFaction(1L)).thenReturn(response);
 
-        mockMvc.perform(post("/api/progression/faction/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.faction").value("Pirate"));
-    }
+    mockMvc.perform(post("/api/progression/faction/1"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.faction").value("Pirate"));
+  }
 
-    @Test
-    @DisplayName("Doit retourner 409 si la faction est déjà choisie")
-    void shouldReturnConflictWhenFactionAlreadyChosen() throws Exception {
-        when(progressionJoueurService.choisirFaction(1L))
-                .thenThrow(new IllegalStateException("La faction a déjà été choisie"));
+  @Test
+  @DisplayName("Doit retourner 409 si la faction est déjà choisie")
+  void shouldReturnConflictWhenFactionAlreadyChosen() throws Exception {
+    when(progressionJoueurService.choisirFaction(1L))
+        .thenThrow(new IllegalStateException("La faction a déjà été choisie"));
 
-        mockMvc.perform(post("/api/progression/faction/1"))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.message").value("La faction a déjà été choisie"));
-    }
+    mockMvc.perform(post("/api/progression/faction/1"))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.message").value("La faction a déjà été choisie"));
+  }
 
-    private ProgressionJoueurResponse progressionResponse(String faction) {
-        return new ProgressionJoueurResponse(
-                1L,
-                1,
-                0,
-                10,
-                10,
-                1,
-                10,
-                10,
-                0,
-                0L,
-                "Luffy",
-                faction
-        );
-    }
+  private ProgressionJoueurResponse progressionResponse(String faction) {
+    return new ProgressionJoueurResponse(
+        1L,
+        1,
+        0,
+        10,
+        10,
+        1,
+        10,
+        10,
+        0,
+        0L,
+        "Luffy",
+        faction);
+  }
 }

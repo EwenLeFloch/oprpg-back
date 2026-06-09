@@ -10,29 +10,29 @@ import com.onepiecerpg.api.service.CombatService;
 @RequestMapping("/api/combats")
 public class CombatController {
 
-    private final CombatService combatService;
+  private final CombatService combatService;
 
-    public CombatController(CombatService combatService) {
-        this.combatService = combatService;
-    }
+  public CombatController(CombatService combatService) {
+    this.combatService = combatService;
+  }
 
-    @PostMapping("/ennemis/{ennemiId}")
-    public ResponseEntity<CombatResponse> demarrerCombat(@PathVariable Long ennemiId) {
-        return ResponseEntity.ok(combatService.demarrerCombat(ennemiId));
-    }
+  @PostMapping("/ennemis/{ennemiId}")
+  public ResponseEntity<CombatResponse> demarrerCombat(@PathVariable Long ennemiId) {
+    return ResponseEntity.ok(combatService.demarrerCombat(ennemiId));
+  }
 
-    @GetMapping("/en-cours")
-    public ResponseEntity<CombatResponse> recupererCombatEnCours() {
-        return ResponseEntity.ok(combatService.recupererCombatEnCours());
-    }
+  @GetMapping("/en-cours")
+  public ResponseEntity<CombatResponse> recupererCombatEnCours() {
+    return ResponseEntity.ok(combatService.recupererCombatEnCours());
+  }
 
-    @PostMapping("/moves/{moveId}")
-    public ResponseEntity<CombatResponse> utiliserMove(@PathVariable Long moveId) {
-        return ResponseEntity.ok(combatService.utiliserMove(moveId));
-    }
+  @PostMapping("/moves/{moveId}")
+  public ResponseEntity<CombatResponse> utiliserMove(@PathVariable Long moveId) {
+    return ResponseEntity.ok(combatService.utiliserMove(moveId));
+  }
 
-    @PostMapping("/fuite")
-    public ResponseEntity<CombatResponse> fuirCombat() {
-        return ResponseEntity.ok(combatService.fuirCombat());
-    }
+  @PostMapping("/fuite")
+  public ResponseEntity<CombatResponse> fuirCombat() {
+    return ResponseEntity.ok(combatService.fuirCombat());
+  }
 }

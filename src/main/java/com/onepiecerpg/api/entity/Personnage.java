@@ -4,32 +4,32 @@ import java.util.HashSet;
 import java.util.Set;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Table(name = "personnage")
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Personnage {
-    
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String nom;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    private String description;
+  @Column(nullable = false, unique = true)
+  private String nom;
 
-    @Column(nullable = false)
-    private boolean jouable = true;
+  private String description;
 
-    @ManyToMany
-    @JoinTable(
-        name = "personnage_move",
-        joinColumns = @JoinColumn(name = "personnage_id"),
-        inverseJoinColumns = @JoinColumn(name = "move_id")
-    )
-    private Set<Move> moves = new HashSet<>();
+  @Builder.Default
+  @Column(nullable = false)
+  private boolean jouable = true;
+
+  @Builder.Default
+  @ManyToMany
+  @JoinTable(name = "personnage_move", joinColumns = @JoinColumn(name = "personnage_id"), inverseJoinColumns = @JoinColumn(name = "move_id"))
+  private Set<Move> moves = new HashSet<>();
 }

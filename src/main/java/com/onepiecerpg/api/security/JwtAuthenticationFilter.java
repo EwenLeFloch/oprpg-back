@@ -20,53 +20,49 @@ import jakarta.servlet.http.*;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtService jwtService;
-    private final UtilisateurRepository utilisateurRepository;
+  private final JwtService jwtService;
+  private final UtilisateurRepository utilisateurRepository;
 
-    public JwtAuthenticationFilter(
-            JwtService jwtService,
-            UtilisateurRepository utilisateurRepository
-    ) {
-        this.jwtService = jwtService;
-        this.utilisateurRepository = utilisateurRepository;
+  public JwtAuthenticationFilter(
+      JwtService jwtService,
+      UtilisateurRepository utilisateurRepository) {
+    this.jwtService = jwtService;
+    this.utilisateurRepository = utilisateurRepository;
+  }
+
+  @Override
+  protected void doFilterInternal(
+      HttpServletRequest request,
+      HttpServletResponse response,
+      FilterChain filterChain) throws ServletException, IOException {
+
+    String authorizationHeader = request.getHeader("Authorization");
+
+    if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+      filterChain.doFilter(request, response);
+      return;
     }
 
-    @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain
-    ) throws ServletException, IOException {
+    try {
+      String token = authorizationHeader.substring(7);
+      String email = jwtService.extraireEmail(token);
 
-        String authorizationHeader = request.getHeader("Authorization");
+      if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        Utilisateur utilisateur = utilisateurRepository.findByEmail(email).orElse(null);
 
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
+        if (utilisateur != null && jwtService.estTokenValide(token)) {
+          UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+              utilisateur.getEmail(),
+              null,
+              List.of(new SimpleGrantedAuthority("ROLE_" + utilisateur.getRole())));
+
+          SecurityContextHolder.getContext().setAuthentication(authentication);
         }
-
-        try {
-            String token = authorizationHeader.substring(7);
-            String email = jwtService.extraireEmail(token);
-
-            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                Utilisateur utilisateur = utilisateurRepository.findByEmail(email).orElse(null);
-
-                if (utilisateur != null && jwtService.estTokenValide(token)) {
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    utilisateur.getEmail(),
-                                    null,
-                                    List.of(new SimpleGrantedAuthority("ROLE_" + utilisateur.getRole()))
-                            );
-
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                }
-            }
-        } catch (Exception exception) {
-            SecurityContextHolder.clearContext();
-        }
-
-        filterChain.doFilter(request, response);
+      }
+    } catch (Exception exception) {
+      SecurityContextHolder.clearContext();
     }
+
+    filterChain.doFilter(request, response);
+  }
 }

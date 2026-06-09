@@ -38,11 +38,10 @@ class UtilisateurServiceTest {
     progressionJoueurService = mock(ProgressionJoueurService.class);
 
     utilisateurService = new UtilisateurService(
-      utilisateurRepository,
-      passwordEncoder,
-      jwtService,
-      progressionJoueurService
-    );
+        utilisateurRepository,
+        passwordEncoder,
+        jwtService,
+        progressionJoueurService);
   }
 
   @AfterEach
@@ -61,7 +60,7 @@ class UtilisateurServiceTest {
     when(utilisateurRepository.findByEmail(request.getEmail())).thenReturn(Optional.empty());
     when(utilisateurRepository.findByPseudo(request.getPseudo())).thenReturn(Optional.empty());
     when(utilisateurRepository.save(any(Utilisateur.class))).thenAnswer(invocation -> invocation.getArgument(0));
-    
+
     UtilisateurResponseDto response = utilisateurService.creerUtilisateur(request);
 
     ArgumentCaptor<Utilisateur> captor = ArgumentCaptor.forClass(Utilisateur.class);
@@ -180,8 +179,7 @@ class UtilisateurServiceTest {
   @DisplayName("Doit récupérer les informations de l'utilisateur connecté")
   void shouldGetConnectedUser() {
     SecurityContextHolder.getContext().setAuthentication(
-      new UsernamePasswordAuthenticationToken("test@test.com", null)
-    );
+        new UsernamePasswordAuthenticationToken("test@test.com", null));
 
     Utilisateur utilisateur = new Utilisateur();
     utilisateur.setId(1L);
@@ -203,8 +201,7 @@ class UtilisateurServiceTest {
   @DisplayName("Doit refuser la récupération de l'utilisateur connecté si l'email n'est pas trouvé")
   void shouldRejectGetConnectedUserWithUnknownEmail() {
     SecurityContextHolder.getContext().setAuthentication(
-      new UsernamePasswordAuthenticationToken("unknown@test.com", null)
-    );
+        new UsernamePasswordAuthenticationToken("unknown@test.com", null));
 
     when(utilisateurRepository.findByEmail("unknown@test.com")).thenReturn(Optional.empty());
 

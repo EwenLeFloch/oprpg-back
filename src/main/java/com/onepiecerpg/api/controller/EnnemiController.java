@@ -12,34 +12,32 @@ import com.onepiecerpg.api.service.EnnemiService;
 @RequestMapping("/api/ennemis")
 public class EnnemiController {
 
-    private final EnnemiService ennemiService;
+  private final EnnemiService ennemiService;
 
-    public EnnemiController(EnnemiService ennemiService) {
-        this.ennemiService = ennemiService;
-    }
+  public EnnemiController(EnnemiService ennemiService) {
+    this.ennemiService = ennemiService;
+  }
 
-    @GetMapping("/{ennemiId}")
-    public ResponseEntity<EnnemiResponse> recupererEnnemiParId(@PathVariable Long ennemiId) {
-        return ResponseEntity.ok(EnnemiResponse.from(ennemiService.recupererEnnemiParId(ennemiId)));
-    }
+  @GetMapping("/{ennemiId}")
+  public ResponseEntity<EnnemiResponse> recupererEnnemiParId(@PathVariable Long ennemiId) {
+    return ResponseEntity.ok(EnnemiResponse.from(ennemiService.recupererEnnemiParId(ennemiId)));
+  }
 
-    @GetMapping("/zone/{zoneId}")
-    public ResponseEntity<List<EnnemiResponse>> recupererEnnemisParZone(@PathVariable Long zoneId) {
-        return ResponseEntity.ok(
-                ennemiService.recupererEnnemisParZone(zoneId)
-                        .stream()
-                        .map(EnnemiResponse::from)
-                        .toList()
-        );
-    }
+  @GetMapping("/zone/{zoneId}")
+  public ResponseEntity<List<EnnemiResponse>> recupererEnnemisParZone(@PathVariable Long zoneId) {
+    return ResponseEntity.ok(
+        ennemiService.recupererEnnemisParZone(zoneId)
+            .stream()
+            .map(EnnemiResponse::from)
+            .toList());
+  }
 
-    @GetMapping("/zone/{zoneId}/classiques")
-    public ResponseEntity<List<EnnemiResponse>> recupererEnnemisClassiquesParZone(@PathVariable Long zoneId) {
-        return ResponseEntity.ok(
-                ennemiService.recupererEnnemisClassiquesParZone(zoneId)
-                        .stream()
-                        .map(EnnemiResponse::from)
-                        .toList()
-        );
-    }
+  @GetMapping("/zone/{zoneId}/classiques")
+  public ResponseEntity<List<EnnemiResponse>> recupererEnnemisClassiquesParZone(@PathVariable Long zoneId) {
+    return ResponseEntity.ok(
+        ennemiService.recupererEnnemisClassiquesParZone(zoneId)
+            .stream()
+            .map(EnnemiResponse::from)
+            .toList());
+  }
 }

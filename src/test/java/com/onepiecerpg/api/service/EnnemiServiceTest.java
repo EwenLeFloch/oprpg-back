@@ -16,50 +16,50 @@ import com.onepiecerpg.api.repository.ZoneRepository;
 
 class EnnemiServiceTest {
 
-    private EnnemiRepository ennemiRepository;
-    private ZoneRepository zoneRepository;
-    private EnnemiService ennemiService;
+  private EnnemiRepository ennemiRepository;
+  private ZoneRepository zoneRepository;
+  private EnnemiService ennemiService;
 
-    @BeforeEach
-    void setUp() {
-        ennemiRepository = mock(EnnemiRepository.class);
-        zoneRepository = mock(ZoneRepository.class);
-        ennemiService = new EnnemiService(ennemiRepository, zoneRepository);
-    }
+  @BeforeEach
+  void setUp() {
+    ennemiRepository = mock(EnnemiRepository.class);
+    zoneRepository = mock(ZoneRepository.class);
+    ennemiService = new EnnemiService(ennemiRepository, zoneRepository);
+  }
 
-    @Test
-    void shouldGetEnemiesByZone() {
-        when(zoneRepository.existsById(1L)).thenReturn(true);
-        when(ennemiRepository.findByZoneId(1L)).thenReturn(List.of(new Ennemi()));
+  @Test
+  void shouldGetEnemiesByZone() {
+    when(zoneRepository.existsById(1L)).thenReturn(true);
+    when(ennemiRepository.findByZoneId(1L)).thenReturn(List.of(new Ennemi()));
 
-        assertThat(ennemiService.recupererEnnemisParZone(1L)).hasSize(1);
-    }
+    assertThat(ennemiService.recupererEnnemisParZone(1L)).hasSize(1);
+  }
 
-    @Test
-    void shouldGetClassicEnemiesByZone() {
-        when(zoneRepository.existsById(1L)).thenReturn(true);
-        when(ennemiRepository.findByZoneIdAndBossFalse(1L)).thenReturn(List.of(new Ennemi()));
+  @Test
+  void shouldGetClassicEnemiesByZone() {
+    when(zoneRepository.existsById(1L)).thenReturn(true);
+    when(ennemiRepository.findByZoneIdAndBossFalse(1L)).thenReturn(List.of(new Ennemi()));
 
-        assertThat(ennemiService.recupererEnnemisClassiquesParZone(1L)).hasSize(1);
-    }
+    assertThat(ennemiService.recupererEnnemisClassiquesParZone(1L)).hasSize(1);
+  }
 
-    @Test
-    void shouldRejectUnknownZone() {
-        when(zoneRepository.existsById(1L)).thenReturn(false);
+  @Test
+  void shouldRejectUnknownZone() {
+    when(zoneRepository.existsById(1L)).thenReturn(false);
 
-        assertThatThrownBy(() -> ennemiService.recupererEnnemisParZone(1L))
-                .isInstanceOf(RessourceIntrouvableException.class)
-                .hasMessage("Zone introuvable");
-    }
+    assertThatThrownBy(() -> ennemiService.recupererEnnemisParZone(1L))
+        .isInstanceOf(RessourceIntrouvableException.class)
+        .hasMessage("Zone introuvable");
+  }
 
-    @Test
-    void shouldGetEnemyById() {
-        Ennemi ennemi = new Ennemi();
-        ennemi.setId(1L);
-        ennemi.setNom("Bandit");
+  @Test
+  void shouldGetEnemyById() {
+    Ennemi ennemi = new Ennemi();
+    ennemi.setId(1L);
+    ennemi.setNom("Bandit");
 
-        when(ennemiRepository.findById(1L)).thenReturn(Optional.of(ennemi));
+    when(ennemiRepository.findById(1L)).thenReturn(Optional.of(ennemi));
 
-        assertThat(ennemiService.recupererEnnemiParId(1L).getNom()).isEqualTo("Bandit");
-    }
+    assertThat(ennemiService.recupererEnnemiParId(1L).getNom()).isEqualTo("Bandit");
+  }
 }

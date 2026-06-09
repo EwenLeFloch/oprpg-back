@@ -9,10 +9,9 @@ import com.onepiecerpg.api.entity.Combat;
 import com.onepiecerpg.api.entity.StatutCombat;
 
 public interface CombatRepository extends JpaRepository<Combat, Long> {
-    List<Combat> findByProgressionJoueurId(Long progressionJoueurId);
+  List<Combat> findByProgressionJoueurId(Long progressionJoueurId);
 
-    Optional<Combat> findByProgressionJoueurIdAndStatut(
-        Long progressionJoueurId,
-        StatutCombat statut
-    );
+  Optional<Combat> findByProgressionJoueurIdAndStatut(
+      Long progressionJoueurId,
+      StatutCombat statut);
 }

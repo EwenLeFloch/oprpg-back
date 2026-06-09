@@ -8,9 +8,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.onepiecerpg.api.entity.Ennemi;
 
 public interface EnnemiRepository extends JpaRepository<Ennemi, Long> {
-    List<Ennemi> findByZoneId(Long zoneId);
+  List<Ennemi> findByZoneId(Long zoneId);
 
-    List<Ennemi> findByZoneIdAndBossFalse(Long zoneId);
+  List<Ennemi> findByZoneIdAndBossFalse(Long zoneId);
 
-    Optional<Ennemi> findByNom(String nom);
+  Optional<Ennemi> findByNom(String nom);
 }

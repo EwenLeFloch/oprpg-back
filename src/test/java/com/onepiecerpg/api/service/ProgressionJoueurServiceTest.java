@@ -27,207 +27,205 @@ import com.onepiecerpg.api.repository.ZoneRepository;
 
 class ProgressionJoueurServiceTest {
 
-    private ProgressionJoueurRepository progressionJoueurRepository;
-    private PersonnageRepository personnageRepository;
-    private UtilisateurRepository utilisateurRepository;
-    private FactionRepository factionRepository;
-    private ZoneRepository zoneRepository;
-    private ProgressionJoueurService progressionJoueurService;
+  private ProgressionJoueurRepository progressionJoueurRepository;
+  private PersonnageRepository personnageRepository;
+  private UtilisateurRepository utilisateurRepository;
+  private FactionRepository factionRepository;
+  private ZoneRepository zoneRepository;
+  private ProgressionJoueurService progressionJoueurService;
 
-    @BeforeEach
-    void setUp() {
-        progressionJoueurRepository = mock(ProgressionJoueurRepository.class);
-        personnageRepository = mock(PersonnageRepository.class);
-        utilisateurRepository = mock(UtilisateurRepository.class);
-        factionRepository = mock(FactionRepository.class);
-        zoneRepository = mock(ZoneRepository.class);
+  @BeforeEach
+  void setUp() {
+    progressionJoueurRepository = mock(ProgressionJoueurRepository.class);
+    personnageRepository = mock(PersonnageRepository.class);
+    utilisateurRepository = mock(UtilisateurRepository.class);
+    factionRepository = mock(FactionRepository.class);
+    zoneRepository = mock(ZoneRepository.class);
 
-        progressionJoueurService = new ProgressionJoueurService(
-                progressionJoueurRepository,
-                personnageRepository,
-                utilisateurRepository,
-                factionRepository,
-                zoneRepository
-        );
+    progressionJoueurService = new ProgressionJoueurService(
+        progressionJoueurRepository,
+        personnageRepository,
+        utilisateurRepository,
+        factionRepository,
+        zoneRepository);
 
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken("test@test.com", null)
-        );
-    }
+    SecurityContextHolder.getContext().setAuthentication(
+        new UsernamePasswordAuthenticationToken("test@test.com", null));
+  }
 
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
-    }
+  @AfterEach
+  void tearDown() {
+    SecurityContextHolder.clearContext();
+  }
 
-    @Test
-    void shouldCreateInitialProgression() {
-        Utilisateur utilisateur = utilisateur();
-        Personnage personnage = personnage();
-        Zone zone = zone();
+  @Test
+  void shouldCreateInitialProgression() {
+    Utilisateur utilisateur = utilisateur();
+    Personnage personnage = personnage();
+    Zone zone = zone();
 
-        when(personnageRepository.findByNom("Luffy")).thenReturn(Optional.of(personnage));
-        when(zoneRepository.findByNom("Village Fuschia")).thenReturn(Optional.of(zone));
-        when(progressionJoueurRepository.save(any(ProgressionJoueur.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+    when(personnageRepository.findByNom("Luffy")).thenReturn(Optional.of(personnage));
+    when(zoneRepository.findByNom("Village Fuschia")).thenReturn(Optional.of(zone));
+    when(progressionJoueurRepository.save(any(ProgressionJoueur.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
 
-        ProgressionJoueur progression = progressionJoueurService.creerProgressionInitiale(utilisateur);
+    ProgressionJoueur progression = progressionJoueurService.creerProgressionInitiale(utilisateur);
 
-        assertThat(progression.getUtilisateur()).isEqualTo(utilisateur);
-        assertThat(progression.getPersonnage()).isEqualTo(personnage);
-        assertThat(progression.getZone()).isEqualTo(zone);
-        assertThat(progression.getVieActuelle()).isEqualTo(progression.getVieMax());
-        assertThat(progression.getEnduranceActuelle()).isEqualTo(progression.getEnduranceMax());
-    }
+    assertThat(progression.getUtilisateur()).isEqualTo(utilisateur);
+    assertThat(progression.getPersonnage()).isEqualTo(personnage);
+    assertThat(progression.getZone()).isEqualTo(zone);
+    assertThat(progression.getVieActuelle()).isEqualTo(progression.getVieMax());
+    assertThat(progression.getEnduranceActuelle()).isEqualTo(progression.getEnduranceMax());
+  }
 
-    @Test
-    void shouldRejectInitialProgressionWhenDefaultCharacterNotFound() {
-        Utilisateur utilisateur = utilisateur();
+  @Test
+  void shouldRejectInitialProgressionWhenDefaultCharacterNotFound() {
+    Utilisateur utilisateur = utilisateur();
 
-        when(personnageRepository.findByNom("Luffy")).thenReturn(Optional.empty());
+    when(personnageRepository.findByNom("Luffy")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> progressionJoueurService.creerProgressionInitiale(utilisateur))
-                .isInstanceOf(RessourceIntrouvableException.class)
-                .hasMessage("Personnage de départ non trouvé");
+    assertThatThrownBy(() -> progressionJoueurService.creerProgressionInitiale(utilisateur))
+        .isInstanceOf(RessourceIntrouvableException.class)
+        .hasMessage("Personnage de départ non trouvé");
 
-        verify(zoneRepository, never()).findByNom(anyString());
-        verify(progressionJoueurRepository, never()).save(any());
-    }
+    verify(zoneRepository, never()).findByNom(anyString());
+    verify(progressionJoueurRepository, never()).save(any());
+  }
 
-    @Test
-    void shouldRejectInitialProgressionWhenDefaultZoneNotFound() {
-        Utilisateur utilisateur = utilisateur();
-        Personnage personnage = personnage();
+  @Test
+  void shouldRejectInitialProgressionWhenDefaultZoneNotFound() {
+    Utilisateur utilisateur = utilisateur();
+    Personnage personnage = personnage();
 
-        when(personnageRepository.findByNom("Luffy")).thenReturn(Optional.of(personnage));
-        when(zoneRepository.findByNom("Village Fuschia")).thenReturn(Optional.empty());
+    when(personnageRepository.findByNom("Luffy")).thenReturn(Optional.of(personnage));
+    when(zoneRepository.findByNom("Village Fuschia")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> progressionJoueurService.creerProgressionInitiale(utilisateur))
-                .isInstanceOf(RessourceIntrouvableException.class)
-                .hasMessage("Zone de départ non trouvée");
+    assertThatThrownBy(() -> progressionJoueurService.creerProgressionInitiale(utilisateur))
+        .isInstanceOf(RessourceIntrouvableException.class)
+        .hasMessage("Zone de départ non trouvée");
 
-        verify(progressionJoueurRepository, never()).save(any());
-    }
+    verify(progressionJoueurRepository, never()).save(any());
+  }
 
-    @Test
-    void shouldGetConnectedProgression() {
-        ProgressionJoueur progression = progression();
+  @Test
+  void shouldGetConnectedProgression() {
+    ProgressionJoueur progression = progression();
 
-        mockProgressionConnectee(progression);
+    mockProgressionConnectee(progression);
 
-        ProgressionJoueurResponse response = progressionJoueurService.getProgressionConnectee();
+    ProgressionJoueurResponse response = progressionJoueurService.getProgressionConnectee();
 
-        assertThat(response.niveau()).isEqualTo(1);
-        assertThat(response.personnage()).isEqualTo("Luffy");
-        assertThat(response.faction()).isNull();
-    }
+    assertThat(response.niveau()).isEqualTo(1);
+    assertThat(response.personnage()).isEqualTo("Luffy");
+    assertThat(response.faction()).isNull();
+  }
 
-    @Test
-    void shouldChooseFaction() {
-        ProgressionJoueur progression = progression();
+  @Test
+  void shouldChooseFaction() {
+    ProgressionJoueur progression = progression();
 
-        Faction faction = new Faction();
-        faction.setId(1L);
-        faction.setNom("Pirate");
+    Faction faction = new Faction();
+    faction.setId(1L);
+    faction.setNom("Pirate");
 
-        mockProgressionConnectee(progression);
-        when(factionRepository.findById(1L)).thenReturn(Optional.of(faction));
-        when(progressionJoueurRepository.save(progression)).thenReturn(progression);
+    mockProgressionConnectee(progression);
+    when(factionRepository.findById(1L)).thenReturn(Optional.of(faction));
+    when(progressionJoueurRepository.save(progression)).thenReturn(progression);
 
-        ProgressionJoueurResponse response = progressionJoueurService.choisirFaction(1L);
+    ProgressionJoueurResponse response = progressionJoueurService.choisirFaction(1L);
 
-        assertThat(response.faction()).isEqualTo("Pirate");
-        assertThat(progression.getFaction()).isEqualTo(faction);
-    }
+    assertThat(response.faction()).isEqualTo("Pirate");
+    assertThat(progression.getFaction()).isEqualTo(faction);
+  }
 
-    @Test
-    void shouldRejectFactionChoiceWhenAlreadyChosen() {
-        ProgressionJoueur progression = progression();
+  @Test
+  void shouldRejectFactionChoiceWhenAlreadyChosen() {
+    ProgressionJoueur progression = progression();
 
-        Faction faction = new Faction();
-        faction.setId(1L);
-        progression.setFaction(faction);
+    Faction faction = new Faction();
+    faction.setId(1L);
+    progression.setFaction(faction);
 
-        mockProgressionConnectee(progression);
+    mockProgressionConnectee(progression);
 
-        assertThatThrownBy(() -> progressionJoueurService.choisirFaction(2L))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("La faction a déjà été choisie");
+    assertThatThrownBy(() -> progressionJoueurService.choisirFaction(2L))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("La faction a déjà été choisie");
 
-        verify(factionRepository, never()).findById(anyLong());
-    }
+    verify(factionRepository, never()).findById(anyLong());
+  }
 
-    @Test
-    void shouldRejectFactionChoiceWhenFactionNotFound() {
-        ProgressionJoueur progression = progression();
+  @Test
+  void shouldRejectFactionChoiceWhenFactionNotFound() {
+    ProgressionJoueur progression = progression();
 
-        mockProgressionConnectee(progression);
-        when(factionRepository.findById(1L)).thenReturn(Optional.empty());
+    mockProgressionConnectee(progression);
+    when(factionRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> progressionJoueurService.choisirFaction(1L))
-                .isInstanceOf(RessourceIntrouvableException.class)
-                .hasMessage("Faction non trouvée");
+    assertThatThrownBy(() -> progressionJoueurService.choisirFaction(1L))
+        .isInstanceOf(RessourceIntrouvableException.class)
+        .hasMessage("Faction non trouvée");
 
-        verify(progressionJoueurRepository, never()).save(any());
-    }
+    verify(progressionJoueurRepository, never()).save(any());
+  }
 
-    private void mockProgressionConnectee(ProgressionJoueur progression) {
-        Utilisateur utilisateur = utilisateur();
+  private void mockProgressionConnectee(ProgressionJoueur progression) {
+    Utilisateur utilisateur = utilisateur();
 
-        when(utilisateurRepository.findByEmail("test@test.com")).thenReturn(Optional.of(utilisateur));
-        when(progressionJoueurRepository.findByUtilisateur(utilisateur)).thenReturn(Optional.of(progression));
-    }
+    when(utilisateurRepository.findByEmail("test@test.com")).thenReturn(Optional.of(utilisateur));
+    when(progressionJoueurRepository.findByUtilisateur(utilisateur)).thenReturn(Optional.of(progression));
+  }
 
-    private Utilisateur utilisateur() {
-        Utilisateur utilisateur = new Utilisateur();
-        utilisateur.setId(1L);
-        utilisateur.setEmail("test@test.com");
-        utilisateur.setPseudo("luffy");
-        utilisateur.setRole("USER");
-        return utilisateur;
-    }
+  private Utilisateur utilisateur() {
+    Utilisateur utilisateur = new Utilisateur();
+    utilisateur.setId(1L);
+    utilisateur.setEmail("test@test.com");
+    utilisateur.setPseudo("luffy");
+    utilisateur.setRole("USER");
+    return utilisateur;
+  }
 
-    private Personnage personnage() {
-        Personnage personnage = new Personnage();
-        personnage.setId(1L);
-        personnage.setNom("Luffy");
-        return personnage;
-    }
+  private Personnage personnage() {
+    Personnage personnage = new Personnage();
+    personnage.setId(1L);
+    personnage.setNom("Luffy");
+    return personnage;
+  }
 
-    private Ile ile() {
-        Ile ile = new Ile();
-        ile.setId(1L);
-        ile.setNom("Dawn Island");
-        ile.setImagePath("/images/dawn-island.png");
-        ile.setDescription("Île de départ");
-        ile.setNiveauRequis(1);
-        return ile;
-    }
+  private Ile ile() {
+    Ile ile = new Ile();
+    ile.setId(1L);
+    ile.setNom("Dawn Island");
+    ile.setImagePath("/images/dawn-island.png");
+    ile.setDescription("Île de départ");
+    ile.setNiveauRequis(1);
+    return ile;
+  }
 
-    private Zone zone() {
-        Zone zone = new Zone();
-        zone.setId(1L);
-        zone.setNom("Village Fuschia");
-        zone.setNiveauRequis(1);
-        zone.setIle(ile());
-        return zone;
-    }
+  private Zone zone() {
+    Zone zone = new Zone();
+    zone.setId(1L);
+    zone.setNom("Village Fuschia");
+    zone.setNiveauRequis(1);
+    zone.setIle(ile());
+    return zone;
+  }
 
-    private ProgressionJoueur progression() {
-        ProgressionJoueur progression = new ProgressionJoueur();
-        progression.setId(1L);
-        progression.setUtilisateur(utilisateur());
-        progression.setPersonnage(personnage());
-        progression.setZone(zone());
-        progression.setNiveau(1);
-        progression.setExperience(0);
-        progression.setEnduranceMax(10);
-        progression.setEnduranceActuelle(10);
-        progression.setPuissance(1);
-        progression.setVieMax(10);
-        progression.setVieActuelle(10);
-        progression.setBerries(0);
-        progression.setPrime(0L);
-        return progression;
-    }
+  private ProgressionJoueur progression() {
+    ProgressionJoueur progression = new ProgressionJoueur();
+    progression.setId(1L);
+    progression.setUtilisateur(utilisateur());
+    progression.setPersonnage(personnage());
+    progression.setZone(zone());
+    progression.setNiveau(1);
+    progression.setExperience(0);
+    progression.setEnduranceMax(10);
+    progression.setEnduranceActuelle(10);
+    progression.setPuissance(1);
+    progression.setVieMax(10);
+    progression.setVieActuelle(10);
+    progression.setBerries(0);
+    progression.setPrime(0L);
+    return progression;
+  }
 }

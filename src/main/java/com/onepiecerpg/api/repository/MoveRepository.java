@@ -9,7 +9,7 @@ import com.onepiecerpg.api.entity.Move;
 import com.onepiecerpg.api.entity.TypeMove;
 
 public interface MoveRepository extends JpaRepository<Move, Long> {
-    Optional<Move> findByNom(String nom);
+  Optional<Move> findByNom(String nom);
 
-    List<Move> findByTypeMove(TypeMove typeMove);
+  List<Move> findByTypeMove(TypeMove typeMove);
 }

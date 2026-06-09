@@ -13,21 +13,21 @@ import com.onepiecerpg.api.entity.Personnage;
 @DataJpaTest
 class PersonnageRepositoryTest {
 
-    @Autowired
-    private PersonnageRepository personnageRepository;
+  @Autowired
+  private PersonnageRepository personnageRepository;
 
-    @Test
-    void shouldFindByNom() {
-        Personnage personnage = new Personnage();
-        personnage.setNom("Luffy");
-        personnage.setDescription("Personnage de départ");
-        personnage.setJouable(true);
+  @Test
+  void shouldFindByNom() {
+    Personnage personnage = new Personnage();
+    personnage.setNom("Luffy");
+    personnage.setDescription("Personnage de départ");
+    personnage.setJouable(true);
 
-        personnageRepository.save(personnage);
+    personnageRepository.save(personnage);
 
-        Optional<Personnage> result = personnageRepository.findByNom("Luffy");
+    Optional<Personnage> result = personnageRepository.findByNom("Luffy");
 
-        assertThat(result).isPresent();
-        assertThat(result.get().getDescription()).isEqualTo("Personnage de départ");
-    }
+    assertThat(result).isPresent();
+    assertThat(result.get().getDescription()).isEqualTo("Personnage de départ");
+  }
 }

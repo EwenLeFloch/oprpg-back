@@ -12,24 +12,23 @@ import com.onepiecerpg.api.service.FactionService;
 @RequestMapping("/api/factions")
 public class FactionController {
 
-    private final FactionService factionService;
+  private final FactionService factionService;
 
-    public FactionController(FactionService factionService) {
-        this.factionService = factionService;
-    }
+  public FactionController(FactionService factionService) {
+    this.factionService = factionService;
+  }
 
-    @GetMapping
-    public ResponseEntity<List<FactionResponse>> recupererToutesLesFactions() {
-        return ResponseEntity.ok(
-                factionService.recupererToutesLesFactions()
-                        .stream()
-                        .map(FactionResponse::from)
-                        .toList()
-        );
-    }
+  @GetMapping
+  public ResponseEntity<List<FactionResponse>> recupererToutesLesFactions() {
+    return ResponseEntity.ok(
+        factionService.recupererToutesLesFactions()
+            .stream()
+            .map(FactionResponse::from)
+            .toList());
+  }
 
-    @GetMapping("/{factionId}")
-    public ResponseEntity<FactionResponse> recupererFactionParId(@PathVariable Long factionId) {
-        return ResponseEntity.ok(FactionResponse.from(factionService.recupererFactionParId(factionId)));
-    }
+  @GetMapping("/{factionId}")
+  public ResponseEntity<FactionResponse> recupererFactionParId(@PathVariable Long factionId) {
+    return ResponseEntity.ok(FactionResponse.from(factionService.recupererFactionParId(factionId)));
+  }
 }

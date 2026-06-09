@@ -13,20 +13,20 @@ import com.onepiecerpg.api.entity.Faction;
 @DataJpaTest
 class FactionRepositoryTest {
 
-    @Autowired
-    private FactionRepository factionRepository;
+  @Autowired
+  private FactionRepository factionRepository;
 
-    @Test
-    void shouldFindByNom() {
-        Faction faction = new Faction();
-        faction.setNom("Pirate");
-        faction.setDescription("Faction pirate");
+  @Test
+  void shouldFindByNom() {
+    Faction faction = new Faction();
+    faction.setNom("Pirate");
+    faction.setDescription("Faction pirate");
 
-        factionRepository.save(faction);
+    factionRepository.save(faction);
 
-        Optional<Faction> result = factionRepository.findByNom("Pirate");
+    Optional<Faction> result = factionRepository.findByNom("Pirate");
 
-        assertThat(result).isPresent();
-        assertThat(result.get().getDescription()).isEqualTo("Faction pirate");
-    }
+    assertThat(result).isPresent();
+    assertThat(result.get().getDescription()).isEqualTo("Faction pirate");
+  }
 }

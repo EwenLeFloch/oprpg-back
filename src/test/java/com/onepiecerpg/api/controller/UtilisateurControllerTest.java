@@ -21,12 +21,10 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Clock;
 
-@WebMvcTest(
-  controllers = UtilisateurController.class,
-  excludeAutoConfiguration = {
+@WebMvcTest(controllers = UtilisateurController.class, excludeAutoConfiguration = {
     SecurityAutoConfiguration.class,
     SecurityFilterAutoConfiguration.class
-  })
+})
 @AutoConfigureMockMvc(addFilters = false)
 class UtilisateurControllerTest {
   @Autowired
@@ -48,11 +46,10 @@ class UtilisateurControllerTest {
   @DisplayName("Doit retourner les informations de l'utilisateur connecté")
   void shouldReturnCurrentUser() throws Exception {
     UtilisateurResponseDto response = new UtilisateurResponseDto(
-      1L,
-      "testuser",
-      "test@test.com",
-      "USER"
-    );
+        1L,
+        "testuser",
+        "test@test.com",
+        "USER");
 
     when(utilisateurService.recupererUtilisateurConnecte()).thenReturn(response);
 

@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.onepiecerpg.api.entity.Zone;
 
 public interface ZoneRepository extends JpaRepository<Zone, Long> {
-    List<Zone> findByIleId(Long ileId);
+  List<Zone> findByIleId(Long ileId);
 
-    Optional<Zone> findByNom(String nom);
+  Optional<Zone> findByNom(String nom);
 }

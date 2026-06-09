@@ -13,22 +13,22 @@ import com.onepiecerpg.api.entity.Ile;
 @DataJpaTest
 class IleRepositoryTest {
 
-    @Autowired
-    private IleRepository ileRepository;
+  @Autowired
+  private IleRepository ileRepository;
 
-    @Test
-    void shouldFindByNom() {
-        Ile ile = new Ile();
-        ile.setNom("Dawn Island");
-        ile.setImagePath("/images/dawn-island.png");
-        ile.setDescription("Île de départ");
-        ile.setNiveauRequis(1);
+  @Test
+  void shouldFindByNom() {
+    Ile ile = new Ile();
+    ile.setNom("Dawn Island");
+    ile.setImagePath("/images/dawn-island.png");
+    ile.setDescription("Île de départ");
+    ile.setNiveauRequis(1);
 
-        ileRepository.save(ile);
+    ileRepository.save(ile);
 
-        Optional<Ile> result = ileRepository.findByNom("Dawn Island");
+    Optional<Ile> result = ileRepository.findByNom("Dawn Island");
 
-        assertThat(result).isPresent();
-        assertThat(result.get().getNiveauRequis()).isEqualTo(1);
-    }
+    assertThat(result).isPresent();
+    assertThat(result.get().getNiveauRequis()).isEqualTo(1);
+  }
 }

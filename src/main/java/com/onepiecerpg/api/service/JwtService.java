@@ -14,7 +14,6 @@ import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
 
-
 @Service
 public class JwtService {
   @Value("${jwt.secret}")

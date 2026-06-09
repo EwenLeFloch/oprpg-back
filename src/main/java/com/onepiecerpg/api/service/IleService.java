@@ -11,23 +11,23 @@ import com.onepiecerpg.api.repository.IleRepository;
 @Service
 public class IleService {
 
-    private final IleRepository ileRepository;
+  private final IleRepository ileRepository;
 
-    public IleService(IleRepository ileRepository) {
-        this.ileRepository = ileRepository;
-    }
+  public IleService(IleRepository ileRepository) {
+    this.ileRepository = ileRepository;
+  }
 
-    public List<Ile> recupererToutesLesIles() {
-        return ileRepository.findAll();
-    }
+  public List<Ile> recupererToutesLesIles() {
+    return ileRepository.findAll();
+  }
 
-    public Ile recupererIleParId(Long ileId) {
-        return ileRepository.findById(ileId)
-            .orElseThrow(() -> new RessourceIntrouvableException("Île introuvable"));
-    }
+  public Ile recupererIleParId(Long ileId) {
+    return ileRepository.findById(ileId)
+        .orElseThrow(() -> new RessourceIntrouvableException("Île introuvable"));
+  }
 
-    public Ile recupererIleParNom(String nom) {
-        return ileRepository.findByNom(nom)
-            .orElseThrow(() -> new RessourceIntrouvableException("Île introuvable"));
-    }
+  public Ile recupererIleParNom(String nom) {
+    return ileRepository.findByNom(nom)
+        .orElseThrow(() -> new RessourceIntrouvableException("Île introuvable"));
+  }
 }

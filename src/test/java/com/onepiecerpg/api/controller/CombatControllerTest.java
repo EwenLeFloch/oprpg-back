@@ -26,109 +26,104 @@ import com.onepiecerpg.api.security.JwtAuthenticationFilter;
 import com.onepiecerpg.api.service.CombatService;
 import com.onepiecerpg.api.service.JwtService;
 
-@WebMvcTest(
-        controllers = CombatController.class,
-        excludeAutoConfiguration = {
-                SecurityAutoConfiguration.class,
-                SecurityFilterAutoConfiguration.class
-        }
-)
+@WebMvcTest(controllers = CombatController.class, excludeAutoConfiguration = {
+    SecurityAutoConfiguration.class,
+    SecurityFilterAutoConfiguration.class
+})
 @Import({
-        GlobalExceptionHandler.class,
-        ClockConfig.class
+    GlobalExceptionHandler.class,
+    ClockConfig.class
 })
 @AutoConfigureMockMvc(addFilters = false)
 class CombatControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+  @Autowired
+  private MockMvc mockMvc;
 
-    @MockitoBean
-    private CombatService combatService;
+  @MockitoBean
+  private CombatService combatService;
 
-    @MockitoBean
-    private JwtService jwtService;
+  @MockitoBean
+  private JwtService jwtService;
 
-    @MockitoBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
+  @MockitoBean
+  private JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @Test
-    @DisplayName("Doit démarrer un combat")
-    void shouldStartCombat() throws Exception {
-        CombatResponse response = combatResponse(StatutCombat.EN_COURS);
+  @Test
+  @DisplayName("Doit démarrer un combat")
+  void shouldStartCombat() throws Exception {
+    CombatResponse response = combatResponse(StatutCombat.EN_COURS);
 
-        when(combatService.demarrerCombat(1L)).thenReturn(response);
+    when(combatService.demarrerCombat(1L)).thenReturn(response);
 
-        mockMvc.perform(post("/api/combats/ennemis/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.combatId").value(1))
-                .andExpect(jsonPath("$.ennemi").value("Bandit"))
-                .andExpect(jsonPath("$.vieEnnemiActuelle").value(20))
-                .andExpect(jsonPath("$.vieJoueurActuelle").value(10))
-                .andExpect(jsonPath("$.statut").value("EN_COURS"));
-    }
+    mockMvc.perform(post("/api/combats/ennemis/1"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.combatId").value(1))
+        .andExpect(jsonPath("$.ennemi").value("Bandit"))
+        .andExpect(jsonPath("$.vieEnnemiActuelle").value(20))
+        .andExpect(jsonPath("$.vieJoueurActuelle").value(10))
+        .andExpect(jsonPath("$.statut").value("EN_COURS"));
+  }
 
-    @Test
-    @DisplayName("Doit retourner le combat en cours")
-    void shouldGetCurrentCombat() throws Exception {
-        CombatResponse response = combatResponse(StatutCombat.EN_COURS);
+  @Test
+  @DisplayName("Doit retourner le combat en cours")
+  void shouldGetCurrentCombat() throws Exception {
+    CombatResponse response = combatResponse(StatutCombat.EN_COURS);
 
-        when(combatService.recupererCombatEnCours()).thenReturn(response);
+    when(combatService.recupererCombatEnCours()).thenReturn(response);
 
-        mockMvc.perform(get("/api/combats/en-cours"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.statut").value("EN_COURS"));
-    }
+    mockMvc.perform(get("/api/combats/en-cours"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.statut").value("EN_COURS"));
+  }
 
-    @Test
-    @DisplayName("Doit utiliser un move")
-    void shouldUseMove() throws Exception {
-        CombatResponse response = new CombatResponse(
-                1L,
-                "Bandit",
-                12,
-                8,
-                StatutCombat.EN_COURS
-        );
+  @Test
+  @DisplayName("Doit utiliser un move")
+  void shouldUseMove() throws Exception {
+    CombatResponse response = new CombatResponse(
+        1L,
+        "Bandit",
+        12,
+        8,
+        StatutCombat.EN_COURS);
 
-        when(combatService.utiliserMove(1L)).thenReturn(response);
+    when(combatService.utiliserMove(1L)).thenReturn(response);
 
-        mockMvc.perform(post("/api/combats/moves/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.vieEnnemiActuelle").value(12))
-                .andExpect(jsonPath("$.vieJoueurActuelle").value(8));
-    }
+    mockMvc.perform(post("/api/combats/moves/1"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.vieEnnemiActuelle").value(12))
+        .andExpect(jsonPath("$.vieJoueurActuelle").value(8));
+  }
 
-    @Test
-    @DisplayName("Doit fuir un combat")
-    void shouldFleeCombat() throws Exception {
-        CombatResponse response = combatResponse(StatutCombat.FUITE);
+  @Test
+  @DisplayName("Doit fuir un combat")
+  void shouldFleeCombat() throws Exception {
+    CombatResponse response = combatResponse(StatutCombat.FUITE);
 
-        when(combatService.fuirCombat()).thenReturn(response);
+    when(combatService.fuirCombat()).thenReturn(response);
 
-        mockMvc.perform(post("/api/combats/fuite"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.statut").value("FUITE"));
-    }
+    mockMvc.perform(post("/api/combats/fuite"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.statut").value("FUITE"));
+  }
 
-    @Test
-    @DisplayName("Doit retourner 404 si aucun combat en cours")
-    void shouldReturnNotFoundWhenNoCurrentCombat() throws Exception {
-        when(combatService.recupererCombatEnCours())
-                .thenThrow(new RessourceIntrouvableException("Aucun combat en cours"));
+  @Test
+  @DisplayName("Doit retourner 404 si aucun combat en cours")
+  void shouldReturnNotFoundWhenNoCurrentCombat() throws Exception {
+    when(combatService.recupererCombatEnCours())
+        .thenThrow(new RessourceIntrouvableException("Aucun combat en cours"));
 
-        mockMvc.perform(get("/api/combats/en-cours"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Aucun combat en cours"));
-    }
+    mockMvc.perform(get("/api/combats/en-cours"))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.message").value("Aucun combat en cours"));
+  }
 
-    private CombatResponse combatResponse(StatutCombat statut) {
-        return new CombatResponse(
-                1L,
-                "Bandit",
-                20,
-                10,
-                statut
-        );
-    }
+  private CombatResponse combatResponse(StatutCombat statut) {
+    return new CombatResponse(
+        1L,
+        "Bandit",
+        20,
+        10,
+        statut);
+  }
 }

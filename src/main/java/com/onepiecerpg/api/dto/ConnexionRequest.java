@@ -8,7 +8,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ConnexionRequest {
-  
+
   @Email(message = "Email invalide")
   @NotBlank(message = "L'email est obligatoire")
   private String email;

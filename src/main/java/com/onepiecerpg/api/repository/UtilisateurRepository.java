@@ -5,6 +5,7 @@ import com.onepiecerpg.api.entity.Utilisateur;
 import java.util.Optional;
 
 public interface UtilisateurRepository extends JpaRepository<Utilisateur, Long> {
-    Optional<Utilisateur> findByPseudo(String pseudo);
-    Optional<Utilisateur> findByEmail(String email);
+  Optional<Utilisateur> findByPseudo(String pseudo);
+
+  Optional<Utilisateur> findByEmail(String email);
 }

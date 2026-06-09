@@ -9,22 +9,22 @@ import com.onepiecerpg.api.service.ProgressionJoueurService;
 @RestController
 @RequestMapping("/api/progression")
 public class ProgressionJoueurController {
-    
-    private final ProgressionJoueurService progressionJoueurService;
 
-    public ProgressionJoueurController(ProgressionJoueurService progressionJoueurService) {
-        this.progressionJoueurService = progressionJoueurService;
-    }
+  private final ProgressionJoueurService progressionJoueurService;
 
-    @GetMapping("/me")
-    public ResponseEntity<ProgressionJoueurResponse> recupererProgressionJoueur() {
-        ProgressionJoueurResponse response = progressionJoueurService.getProgressionConnectee();
-        return ResponseEntity.ok(response);
-    }
+  public ProgressionJoueurController(ProgressionJoueurService progressionJoueurService) {
+    this.progressionJoueurService = progressionJoueurService;
+  }
 
-    @PostMapping("/faction/{factionId}")
-    public ResponseEntity<ProgressionJoueurResponse> choisirFaction(@PathVariable Long factionId) {
-        ProgressionJoueurResponse response = progressionJoueurService.choisirFaction(factionId);
-        return ResponseEntity.ok(response);
-    }
+  @GetMapping("/me")
+  public ResponseEntity<ProgressionJoueurResponse> recupererProgressionJoueur() {
+    ProgressionJoueurResponse response = progressionJoueurService.getProgressionConnectee();
+    return ResponseEntity.ok(response);
+  }
+
+  @PostMapping("/faction/{factionId}")
+  public ResponseEntity<ProgressionJoueurResponse> choisirFaction(@PathVariable Long factionId) {
+    ProgressionJoueurResponse response = progressionJoueurService.choisirFaction(factionId);
+    return ResponseEntity.ok(response);
+  }
 }
