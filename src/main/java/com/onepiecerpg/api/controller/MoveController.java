@@ -28,6 +28,15 @@ public class MoveController {
             .toList());
   }
 
+  @GetMapping("/personnage")
+  public ResponseEntity<List<MoveResponse>> recupererMovesPersonnageConnecte() {
+    return ResponseEntity.ok(
+        moveService.recupererMovesPersonnageConnecte()
+            .stream()
+            .map(MoveResponse::from)
+            .toList());
+  }
+
   @GetMapping("/{moveId}")
   public ResponseEntity<MoveResponse> recupererMoveParId(@PathVariable Long moveId) {
     return ResponseEntity.ok(MoveResponse.from(moveService.recupererMoveParId(moveId)));
