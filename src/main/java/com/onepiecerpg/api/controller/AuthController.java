@@ -10,6 +10,8 @@ import com.onepiecerpg.api.dto.InscriptionRequest;
 import com.onepiecerpg.api.dto.UtilisateurResponseDto;
 import com.onepiecerpg.api.service.UtilisateurService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 
 @RestController
@@ -23,6 +25,9 @@ public class AuthController {
   }
 
   @PostMapping("/inscription")
+  @Operation(summary = "Inscrire un nouvel utilisateur")
+  @ApiResponse(responseCode = "201", description = "Utilisateur créé avec succès")
+  @ApiResponse(responseCode = "400", description = "Données invalides")
   public ResponseEntity<UtilisateurResponseDto> inscription(
       @Valid @RequestBody InscriptionRequest request) {
     return ResponseEntity
@@ -31,6 +36,10 @@ public class AuthController {
   }
 
   @PostMapping("/connexion")
+  @Operation(summary = "Connecter un utilisateur")
+  @ApiResponse(responseCode = "200", description = "Connexion réussie")
+  @ApiResponse(responseCode = "400", description = "Données invalides")
+  @ApiResponse(responseCode = "401", description = "Identifiants incorrects")
   public ResponseEntity<ConnexionResponse> connexion(
       @Valid @RequestBody ConnexionRequest request) {
     return ResponseEntity.ok(utilisateurService.connecterUtilisateur(request));

@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.onepiecerpg.api.entity.Ennemi;
 import com.onepiecerpg.api.entity.Faction;
@@ -55,6 +56,7 @@ public class DataInitializer implements CommandLineRunner {
   }
 
   @Override
+  @Transactional
   public void run(String... args) {
     Ile dawnIsland = creerIleSiAbsente();
     Zone villageFuschia = creerZoneSiAbsente(dawnIsland);

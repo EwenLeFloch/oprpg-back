@@ -43,6 +43,7 @@ public class Move {
   @Builder.Default
   @Min(0)
   @Max(100)
+  @Column(name = "precision_move")
   private Integer precision = 100;
 
   @PositiveOrZero
