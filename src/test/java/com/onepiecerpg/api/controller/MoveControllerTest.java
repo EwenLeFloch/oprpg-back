@@ -18,26 +18,26 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.onepiecerpg.api.entity.Move;
-import com.onepiecerpg.api.entity.TypeMove;
+import com.onepiecerpg.api.entity.Capacite;
+import com.onepiecerpg.api.entity.TypeCapacite;
 import com.onepiecerpg.api.exception.GlobalExceptionHandler;
 import com.onepiecerpg.api.security.JwtAuthenticationFilter;
 import com.onepiecerpg.api.service.JwtService;
-import com.onepiecerpg.api.service.MoveService;
+import com.onepiecerpg.api.service.CapaciteService;
 
-@WebMvcTest(controllers = MoveController.class, excludeAutoConfiguration = {
+@WebMvcTest(controllers = CapaciteController.class, excludeAutoConfiguration = {
     SecurityAutoConfiguration.class,
     SecurityFilterAutoConfiguration.class
 })
 @Import(GlobalExceptionHandler.class)
 @AutoConfigureMockMvc(addFilters = false)
-class MoveControllerTest {
+class CapaciteControllerTest {
 
   @Autowired
   private MockMvc mockMvc;
 
   @MockitoBean
-  private MoveService moveService;
+  private CapaciteService capaciteService;
 
   @MockitoBean
   private Clock clock;
@@ -49,64 +49,64 @@ class MoveControllerTest {
   private JwtAuthenticationFilter jwtAuthenticationFilter;
 
   @Test
-  @DisplayName("Doit retourner tous les moves")
-  void shouldGetAllMoves() throws Exception {
-    when(moveService.recupererTousLesMoves()).thenReturn(List.of(move()));
+  @DisplayName("Doit retourner tous les capacites")
+  void shouldGetAllCapacites() throws Exception {
+    when(capaciteService.recupererTousLesCapacites()).thenReturn(List.of(capacite()));
 
-    mockMvc.perform(get("/api/moves"))
+    mockMvc.perform(get("/api/capacites"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].id").value(1))
         .andExpect(jsonPath("$[0].nom").value("Coup de poing"))
-        .andExpect(jsonPath("$[0].typeMove").value("ATTAQUE"));
+        .andExpect(jsonPath("$[0].typeCapacite").value("ATTAQUE"));
   }
 
   @Test
-  @DisplayName("Doit retourner les moves du personnage connecté")
-  void shouldGetConnectedCharacterMoves() throws Exception {
-    when(moveService.recupererMovesPersonnageConnecte()).thenReturn(List.of(move()));
+  @DisplayName("Doit retourner les capacites du personnage connecté")
+  void shouldGetConnectedCharacterCapacites() throws Exception {
+    when(capaciteService.recupererCapacitesPersonnageConnecte()).thenReturn(List.of(capacite()));
 
-    mockMvc.perform(get("/api/moves/personnage"))
+    mockMvc.perform(get("/api/capacites/personnage"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].id").value(1))
         .andExpect(jsonPath("$[0].nom").value("Coup de poing"))
-        .andExpect(jsonPath("$[0].typeMove").value("ATTAQUE"));
+        .andExpect(jsonPath("$[0].typeCapacite").value("ATTAQUE"));
   }
 
   @Test
-  @DisplayName("Doit retourner un move par id")
-  void shouldGetMoveById() throws Exception {
-    when(moveService.recupererMoveParId(1L)).thenReturn(move());
+  @DisplayName("Doit retourner un capacite par id")
+  void shouldGetCapaciteById() throws Exception {
+    when(capaciteService.recupererCapaciteParId(1L)).thenReturn(capacite());
 
-    mockMvc.perform(get("/api/moves/1"))
+    mockMvc.perform(get("/api/capacites/1"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id").value(1))
         .andExpect(jsonPath("$.nom").value("Coup de poing"))
-        .andExpect(jsonPath("$.typeMove").value("ATTAQUE"));
+        .andExpect(jsonPath("$.typeCapacite").value("ATTAQUE"));
   }
 
   @Test
-  @DisplayName("Doit retourner les moves par type")
-  void shouldGetMovesByType() throws Exception {
-    when(moveService.recupererMovesParType(TypeMove.ATTAQUE)).thenReturn(List.of(move()));
+  @DisplayName("Doit retourner les capacites par type")
+  void shouldGetCapacitesByType() throws Exception {
+    when(capaciteService.recupererCapacitesParType(TypeCapacite.ATTAQUE)).thenReturn(List.of(capacite()));
 
-    mockMvc.perform(get("/api/moves/type/ATTAQUE"))
+    mockMvc.perform(get("/api/capacites/type/ATTAQUE"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].id").value(1))
         .andExpect(jsonPath("$[0].nom").value("Coup de poing"))
-        .andExpect(jsonPath("$[0].typeMove").value("ATTAQUE"));
+        .andExpect(jsonPath("$[0].typeCapacite").value("ATTAQUE"));
   }
 
-  private Move move() {
-    Move move = new Move();
-    move.setId(1L);
-    move.setNom("Coup de poing");
-    move.setDescription("Une attaque simple au corps-à-corps.");
-    move.setTypeMove(TypeMove.ATTAQUE);
-    move.setValeurMin(4);
-    move.setValeurMax(7);
-    move.setDuree(1);
-    move.setPrecision(95);
-    move.setCoutEndurance(1);
-    return move;
+  private Capacite capacite() {
+    Capacite capacite = new Capacite();
+    capacite.setId(1L);
+    capacite.setNom("Coup de poing");
+    capacite.setDescription("Une attaque simple au corps-à-corps.");
+    capacite.setTypeCapacite(TypeCapacite.ATTAQUE);
+    capacite.setValeurMin(4);
+    capacite.setValeurMax(7);
+    capacite.setDuree(1);
+    capacite.setPrecision(95);
+    capacite.setCoutEndurance(1);
+    return capacite;
   }
 }

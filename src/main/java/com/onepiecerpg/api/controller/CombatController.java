@@ -26,9 +26,9 @@ public class CombatController {
     return ResponseEntity.ok(combatService.recupererCombatEnCours());
   }
 
-  @PostMapping("/moves/{moveId}")
-  public ResponseEntity<CombatResponse> utiliserMove(@PathVariable Long moveId) {
-    return ResponseEntity.ok(combatService.utiliserMove(moveId));
+  @PostMapping("/capacites/{capaciteId}")
+  public ResponseEntity<CombatResponse> utiliserCapacite(@PathVariable Long capaciteId) {
+    return ResponseEntity.ok(combatService.utiliserCapacite(capaciteId));
   }
 
   @PostMapping("/fuite")

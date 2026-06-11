@@ -7,51 +7,51 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.onepiecerpg.api.entity.Move;
+import com.onepiecerpg.api.entity.Capacite;
 import com.onepiecerpg.api.entity.ProgressionJoueur;
-import com.onepiecerpg.api.entity.TypeMove;
+import com.onepiecerpg.api.entity.TypeCapacite;
 import com.onepiecerpg.api.entity.Utilisateur;
 import com.onepiecerpg.api.exception.RessourceIntrouvableException;
-import com.onepiecerpg.api.repository.MoveRepository;
+import com.onepiecerpg.api.repository.CapaciteRepository;
 import com.onepiecerpg.api.repository.ProgressionJoueurRepository;
 import com.onepiecerpg.api.repository.UtilisateurRepository;
 
 @Service
-public class MoveService {
+public class CapaciteService {
 
-  private final MoveRepository moveRepository;
+  private final CapaciteRepository capaciteRepository;
   private final UtilisateurRepository utilisateurRepository;
   private final ProgressionJoueurRepository progressionJoueurRepository;
 
-  public MoveService(
-      MoveRepository moveRepository,
+  public CapaciteService(
+      CapaciteRepository capaciteRepository,
       UtilisateurRepository utilisateurRepository,
       ProgressionJoueurRepository progressionJoueurRepository) {
-    this.moveRepository = moveRepository;
+    this.capaciteRepository = capaciteRepository;
     this.utilisateurRepository = utilisateurRepository;
     this.progressionJoueurRepository = progressionJoueurRepository;
   }
 
-  public List<Move> recupererTousLesMoves() {
-    return moveRepository.findAll();
+  public List<Capacite> recupererTousLesCapacites() {
+    return capaciteRepository.findAll();
   }
 
-  public Move recupererMoveParId(Long moveId) {
-    return moveRepository.findById(moveId)
-        .orElseThrow(() -> new RessourceIntrouvableException("Move introuvable"));
+  public Capacite recupererCapaciteParId(Long capaciteId) {
+    return capaciteRepository.findById(capaciteId)
+        .orElseThrow(() -> new RessourceIntrouvableException("Capacite introuvable"));
   }
 
-  public Move recupererMoveParNom(String nom) {
-    return moveRepository.findByNom(nom)
-        .orElseThrow(() -> new RessourceIntrouvableException("Move introuvable"));
+  public Capacite recupererCapaciteParNom(String nom) {
+    return capaciteRepository.findByNom(nom)
+        .orElseThrow(() -> new RessourceIntrouvableException("Capacite introuvable"));
   }
 
-  public List<Move> recupererMovesParType(TypeMove typeMove) {
-    return moveRepository.findByTypeMove(typeMove);
+  public List<Capacite> recupererCapacitesParType(TypeCapacite typeCapacite) {
+    return capaciteRepository.findByTypeCapacite(typeCapacite);
   }
 
   @Transactional(readOnly = true)
-  public List<Move> recupererMovesPersonnageConnecte() {
+  public List<Capacite> recupererCapacitesPersonnageConnecte() {
     String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
     Utilisateur utilisateur = utilisateurRepository.findByEmail(email)
@@ -60,8 +60,8 @@ public class MoveService {
     ProgressionJoueur progression = progressionJoueurRepository.findByUtilisateur(utilisateur)
         .orElseThrow(() -> new RessourceIntrouvableException("Progression du joueur non trouvée"));
 
-    return progression.getPersonnage().getMoves().stream()
-        .sorted(Comparator.comparing(Move::getId))
+    return progression.getPersonnage().getCapacites().stream()
+        .sorted(Comparator.comparing(Capacite::getId))
         .toList();
   }
 }

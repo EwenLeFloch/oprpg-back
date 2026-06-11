@@ -1,6 +1,6 @@
 package com.onepiecerpg.api.entity;
 
-public enum TypeMove {
+public enum TypeCapacite {
   ATTAQUE,
   SOIN,
   BOOST,

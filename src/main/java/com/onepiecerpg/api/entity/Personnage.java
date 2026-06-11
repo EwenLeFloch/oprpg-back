@@ -30,6 +30,6 @@ public class Personnage {
 
   @Builder.Default
   @ManyToMany
-  @JoinTable(name = "personnage_move", joinColumns = @JoinColumn(name = "personnage_id"), inverseJoinColumns = @JoinColumn(name = "move_id"))
-  private Set<Move> moves = new HashSet<>();
+  @JoinTable(name = "personnage_capacite", joinColumns = @JoinColumn(name = "personnage_id"), inverseJoinColumns = @JoinColumn(name = "capacite_id"))
+  private Set<Capacite> capacites = new HashSet<>();
 }

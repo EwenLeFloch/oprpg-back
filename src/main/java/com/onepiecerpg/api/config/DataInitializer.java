@@ -11,15 +11,15 @@ import org.springframework.transaction.annotation.Transactional;
 import com.onepiecerpg.api.entity.Ennemi;
 import com.onepiecerpg.api.entity.Faction;
 import com.onepiecerpg.api.entity.Ile;
-import com.onepiecerpg.api.entity.Move;
+import com.onepiecerpg.api.entity.Capacite;
 import com.onepiecerpg.api.entity.News;
 import com.onepiecerpg.api.entity.Personnage;
-import com.onepiecerpg.api.entity.TypeMove;
+import com.onepiecerpg.api.entity.TypeCapacite;
 import com.onepiecerpg.api.entity.Zone;
 import com.onepiecerpg.api.repository.EnnemiRepository;
 import com.onepiecerpg.api.repository.FactionRepository;
 import com.onepiecerpg.api.repository.IleRepository;
-import com.onepiecerpg.api.repository.MoveRepository;
+import com.onepiecerpg.api.repository.CapaciteRepository;
 import com.onepiecerpg.api.repository.NewsRepository;
 import com.onepiecerpg.api.repository.PersonnageRepository;
 import com.onepiecerpg.api.repository.ZoneRepository;
@@ -30,7 +30,7 @@ public class DataInitializer implements CommandLineRunner {
   private final IleRepository ileRepository;
   private final ZoneRepository zoneRepository;
   private final FactionRepository factionRepository;
-  private final MoveRepository moveRepository;
+  private final CapaciteRepository capaciteRepository;
   private final PersonnageRepository personnageRepository;
   private final EnnemiRepository ennemiRepository;
   private final NewsRepository newsRepository;
@@ -40,7 +40,7 @@ public class DataInitializer implements CommandLineRunner {
       IleRepository ileRepository,
       ZoneRepository zoneRepository,
       FactionRepository factionRepository,
-      MoveRepository moveRepository,
+      CapaciteRepository capaciteRepository,
       PersonnageRepository personnageRepository,
       EnnemiRepository ennemiRepository,
       NewsRepository newsRepository,
@@ -48,7 +48,7 @@ public class DataInitializer implements CommandLineRunner {
     this.ileRepository = ileRepository;
     this.zoneRepository = zoneRepository;
     this.factionRepository = factionRepository;
-    this.moveRepository = moveRepository;
+    this.capaciteRepository = capaciteRepository;
     this.personnageRepository = personnageRepository;
     this.ennemiRepository = ennemiRepository;
     this.newsRepository = newsRepository;
@@ -63,11 +63,11 @@ public class DataInitializer implements CommandLineRunner {
 
     creerFactionsSiAbsentes();
 
-    Move coupDePoing = creerMoveSiAbsent(
-        Move.builder()
+    Capacite coupDePoing = creerCapaciteSiAbsent(
+        Capacite.builder()
             .nom("Coup de poing")
             .description("Une attaque simple au corps-à-corps.")
-            .typeMove(TypeMove.ATTAQUE)
+            .typeCapacite(TypeCapacite.ATTAQUE)
             .valeurMin(4)
             .valeurMax(7)
             .duree(1)
@@ -75,11 +75,11 @@ public class DataInitializer implements CommandLineRunner {
             .coutEndurance(1)
             .build());
 
-    Move coupDePied = creerMoveSiAbsent(
-        Move.builder()
+    Capacite coupDePied = creerCapaciteSiAbsent(
+        Capacite.builder()
             .nom("Coup de pied")
             .description("Une attaque plus puissante mais légèrement moins précise.")
-            .typeMove(TypeMove.ATTAQUE)
+            .typeCapacite(TypeCapacite.ATTAQUE)
             .valeurMin(6)
             .valeurMax(10)
             .duree(1)
@@ -87,11 +87,11 @@ public class DataInitializer implements CommandLineRunner {
             .coutEndurance(2)
             .build());
 
-    Move lait = creerMoveSiAbsent(
-        Move.builder()
+    Capacite lait = creerCapaciteSiAbsent(
+        Capacite.builder()
             .nom("Bouteille de lait")
             .description("Restaure quelques points de vie.")
-            .typeMove(TypeMove.SOIN)
+            .typeCapacite(TypeCapacite.SOIN)
             .valeurMin(4)
             .valeurMax(8)
             .duree(1)
@@ -99,11 +99,11 @@ public class DataInitializer implements CommandLineRunner {
             .coutEndurance(2)
             .build());
 
-    Move intimidation = creerMoveSiAbsent(
-        Move.builder()
+    Capacite intimidation = creerCapaciteSiAbsent(
+        Capacite.builder()
             .nom("Intimidation")
             .description("Une technique de pression destinée à déstabiliser l'adversaire.")
-            .typeMove(TypeMove.BOOST)
+            .typeCapacite(TypeCapacite.BOOST)
             .valeurMin(1)
             .valeurMax(2)
             .duree(1)
@@ -122,7 +122,7 @@ public class DataInitializer implements CommandLineRunner {
             .experienceMax(6)
             .boss(false)
             .zone(villageFuschia)
-            .moves(Set.of(coupDePoing))
+            .capacites(Set.of(coupDePoing))
             .build());
 
     creerEnnemiSiAbsent(
@@ -134,7 +134,7 @@ public class DataInitializer implements CommandLineRunner {
             .experienceMax(10)
             .boss(false)
             .zone(villageFuschia)
-            .moves(Set.of(coupDePoing, coupDePied))
+            .capacites(Set.of(coupDePoing, coupDePied))
             .build());
 
     creerEnnemiSiAbsent(
@@ -146,7 +146,7 @@ public class DataInitializer implements CommandLineRunner {
             .experienceMax(14)
             .boss(false)
             .zone(villageFuschia)
-            .moves(Set.of(coupDePoing, coupDePied))
+            .capacites(Set.of(coupDePoing, coupDePied))
             .build());
 
     creerEnnemiSiAbsent(
@@ -158,7 +158,7 @@ public class DataInitializer implements CommandLineRunner {
             .experienceMax(40)
             .boss(true)
             .zone(villageFuschia)
-            .moves(Set.of(coupDePoing, coupDePied, intimidation))
+            .capacites(Set.of(coupDePoing, coupDePied, intimidation))
             .build());
 
     creerNewsSiAbsente();
@@ -225,21 +225,21 @@ public class DataInitializer implements CommandLineRunner {
     }
   }
 
-  private Move creerMoveSiAbsent(Move move) {
-    Move moveExistant = moveRepository.findByNom(move.getNom()).orElse(null);
+  private Capacite creerCapaciteSiAbsent(Capacite capacite) {
+    Capacite capaciteExistant = capaciteRepository.findByNom(capacite.getNom()).orElse(null);
 
-    if (moveExistant != null) {
-      return moveExistant;
+    if (capaciteExistant != null) {
+      return capaciteExistant;
     }
 
-    return moveRepository.save(move);
+    return capaciteRepository.save(capacite);
   }
 
-  private void creerPersonnageLuffySiAbsent(Set<Move> moves) {
+  private void creerPersonnageLuffySiAbsent(Set<Capacite> capacites) {
     Personnage personnageExistant = personnageRepository.findByNom("Luffy").orElse(null);
 
     if (personnageExistant != null) {
-      personnageExistant.getMoves().addAll(moves);
+      personnageExistant.getCapacites().addAll(capacites);
       personnageRepository.save(personnageExistant);
       return;
     }
@@ -248,7 +248,7 @@ public class DataInitializer implements CommandLineRunner {
     personnage.setNom("Luffy");
     personnage.setDescription("Personnage de départ du joueur.");
     personnage.setJouable(true);
-    personnage.setMoves(moves);
+    personnage.setCapacites(capacites);
 
     personnageRepository.save(personnage);
   }

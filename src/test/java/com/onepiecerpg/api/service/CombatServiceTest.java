@@ -18,11 +18,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import com.onepiecerpg.api.dto.CombatResponse;
 import com.onepiecerpg.api.entity.Combat;
 import com.onepiecerpg.api.entity.Ennemi;
-import com.onepiecerpg.api.entity.Move;
+import com.onepiecerpg.api.entity.Capacite;
 import com.onepiecerpg.api.entity.Personnage;
 import com.onepiecerpg.api.entity.ProgressionJoueur;
 import com.onepiecerpg.api.entity.StatutCombat;
-import com.onepiecerpg.api.entity.TypeMove;
+import com.onepiecerpg.api.entity.TypeCapacite;
 import com.onepiecerpg.api.entity.Utilisateur;
 import com.onepiecerpg.api.repository.CombatRepository;
 import com.onepiecerpg.api.repository.EnnemiRepository;
@@ -104,8 +104,8 @@ class CombatServiceTest {
     ProgressionJoueur progression = progression();
     progression.setPuissance(4);
 
-    Move attaque = move(1L, TypeMove.ATTAQUE, 5, 5);
-    progression.getPersonnage().setMoves(new HashSet<>(Set.of(attaque)));
+    Capacite attaque = capacite(1L, TypeCapacite.ATTAQUE, 5, 5);
+    progression.getPersonnage().setCapacites(new HashSet<>(Set.of(attaque)));
 
     Ennemi ennemi = ennemi("Bandit", 20, 3, 5, 5);
     Combat combat = combat(progression, ennemi, 20);
@@ -114,7 +114,7 @@ class CombatServiceTest {
     when(combatRepository.findByProgressionJoueurIdAndStatut(1L, StatutCombat.EN_COURS))
         .thenReturn(Optional.of(combat));
 
-    CombatResponse response = combatService.utiliserMove(1L);
+    CombatResponse response = combatService.utiliserCapacite(1L);
 
     assertThat(response.vieEnnemiActuelle()).isEqualTo(13);
     assertThat(response.vieJoueurActuelle()).isEqualTo(27);
@@ -127,8 +127,8 @@ class CombatServiceTest {
     ProgressionJoueur progression = progression();
     progression.setVieActuelle(20);
 
-    Move soin = move(1L, TypeMove.SOIN, 5, 5);
-    progression.getPersonnage().setMoves(new HashSet<>(Set.of(soin)));
+    Capacite soin = capacite(1L, TypeCapacite.SOIN, 5, 5);
+    progression.getPersonnage().setCapacites(new HashSet<>(Set.of(soin)));
 
     Ennemi ennemi = ennemi("Bandit", 20, 3, 5, 5);
     Combat combat = combat(progression, ennemi, 20);
@@ -137,7 +137,7 @@ class CombatServiceTest {
     when(combatRepository.findByProgressionJoueurIdAndStatut(1L, StatutCombat.EN_COURS))
         .thenReturn(Optional.of(combat));
 
-    CombatResponse response = combatService.utiliserMove(1L);
+    CombatResponse response = combatService.utiliserCapacite(1L);
 
     assertThat(response.vieJoueurActuelle()).isEqualTo(22);
   }
@@ -147,8 +147,8 @@ class CombatServiceTest {
     ProgressionJoueur progression = progression();
     progression.setExperience(25);
 
-    Move attaque = move(1L, TypeMove.ATTAQUE, 50, 50);
-    progression.getPersonnage().setMoves(new HashSet<>(Set.of(attaque)));
+    Capacite attaque = capacite(1L, TypeCapacite.ATTAQUE, 50, 50);
+    progression.getPersonnage().setCapacites(new HashSet<>(Set.of(attaque)));
 
     Ennemi ennemi = ennemi("Bandit", 20, 3, 10, 10);
     Combat combat = combat(progression, ennemi, 20);
@@ -157,7 +157,7 @@ class CombatServiceTest {
     when(combatRepository.findByProgressionJoueurIdAndStatut(1L, StatutCombat.EN_COURS))
         .thenReturn(Optional.of(combat));
 
-    CombatResponse response = combatService.utiliserMove(1L);
+    CombatResponse response = combatService.utiliserCapacite(1L);
 
     assertThat(response.statut()).isEqualTo(StatutCombat.VICTOIRE);
     assertThat(response.recompense()).isNotNull();
@@ -171,8 +171,8 @@ class CombatServiceTest {
     ProgressionJoueur progression = progression();
     progression.setVieActuelle(2);
 
-    Move attaque = move(1L, TypeMove.ATTAQUE, 1, 1);
-    progression.getPersonnage().setMoves(new HashSet<>(Set.of(attaque)));
+    Capacite attaque = capacite(1L, TypeCapacite.ATTAQUE, 1, 1);
+    progression.getPersonnage().setCapacites(new HashSet<>(Set.of(attaque)));
 
     Ennemi ennemi = ennemi("Bandit", 50, 10, 5, 5);
     Combat combat = combat(progression, ennemi, 50);
@@ -181,7 +181,7 @@ class CombatServiceTest {
     when(combatRepository.findByProgressionJoueurIdAndStatut(1L, StatutCombat.EN_COURS))
         .thenReturn(Optional.of(combat));
 
-    CombatResponse response = combatService.utiliserMove(1L);
+    CombatResponse response = combatService.utiliserCapacite(1L);
 
     assertThat(response.statut()).isEqualTo(StatutCombat.DEFAITE);
     assertThat(response.vieJoueurActuelle()).isZero();
@@ -252,15 +252,15 @@ class CombatServiceTest {
     return ennemi;
   }
 
-  private Move move(Long id, TypeMove typeMove, int valeurMin, int valeurMax) {
-    Move move = new Move();
-    move.setId(id);
-    move.setNom("Move test");
-    move.setTypeMove(typeMove);
-    move.setValeurMin(valeurMin);
-    move.setValeurMax(valeurMax);
-    move.setCoutEndurance(1);
-    return move;
+  private Capacite capacite(Long id, TypeCapacite typeCapacite, int valeurMin, int valeurMax) {
+    Capacite capacite = new Capacite();
+    capacite.setId(id);
+    capacite.setNom("Capacite test");
+    capacite.setTypeCapacite(typeCapacite);
+    capacite.setValeurMin(valeurMin);
+    capacite.setValeurMax(valeurMax);
+    capacite.setCoutEndurance(1);
+    return capacite;
   }
 
   private Combat combat(ProgressionJoueur progression, Ennemi ennemi, int vieEnnemiActuelle) {

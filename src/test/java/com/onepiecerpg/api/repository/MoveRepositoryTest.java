@@ -9,48 +9,48 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
-import com.onepiecerpg.api.entity.Move;
-import com.onepiecerpg.api.entity.TypeMove;
+import com.onepiecerpg.api.entity.Capacite;
+import com.onepiecerpg.api.entity.TypeCapacite;
 
 @DataJpaTest
-class MoveRepositoryTest {
+class CapaciteRepositoryTest {
 
   @Autowired
-  private MoveRepository moveRepository;
+  private CapaciteRepository capaciteRepository;
 
   @Test
   void shouldFindByNom() {
-    Move move = move("Coup de poing", TypeMove.ATTAQUE);
+    Capacite capacite = capacite("Coup de poing", TypeCapacite.ATTAQUE);
 
-    moveRepository.save(move);
+    capaciteRepository.save(capacite);
 
-    Optional<Move> result = moveRepository.findByNom("Coup de poing");
+    Optional<Capacite> result = capaciteRepository.findByNom("Coup de poing");
 
     assertThat(result).isPresent();
-    assertThat(result.get().getTypeMove()).isEqualTo(TypeMove.ATTAQUE);
+    assertThat(result.get().getTypeCapacite()).isEqualTo(TypeCapacite.ATTAQUE);
   }
 
   @Test
-  void shouldFindByTypeMove() {
-    moveRepository.save(move("Coup de poing", TypeMove.ATTAQUE));
-    moveRepository.save(move("Lait", TypeMove.SOIN));
+  void shouldFindByTypeCapacite() {
+    capaciteRepository.save(capacite("Coup de poing", TypeCapacite.ATTAQUE));
+    capaciteRepository.save(capacite("Lait", TypeCapacite.SOIN));
 
-    List<Move> result = moveRepository.findByTypeMove(TypeMove.ATTAQUE);
+    List<Capacite> result = capaciteRepository.findByTypeCapacite(TypeCapacite.ATTAQUE);
 
     assertThat(result).hasSize(1);
     assertThat(result.getFirst().getNom()).isEqualTo("Coup de poing");
   }
 
-  private Move move(String nom, TypeMove typeMove) {
-    Move move = new Move();
-    move.setNom(nom);
-    move.setDescription("Description test");
-    move.setTypeMove(typeMove);
-    move.setValeurMin(1);
-    move.setValeurMax(3);
-    move.setDuree(1);
-    move.setPrecision(100);
-    move.setCoutEndurance(1);
-    return move;
+  private Capacite capacite(String nom, TypeCapacite typeCapacite) {
+    Capacite capacite = new Capacite();
+    capacite.setNom(nom);
+    capacite.setDescription("Description test");
+    capacite.setTypeCapacite(typeCapacite);
+    capacite.setValeurMin(1);
+    capacite.setValeurMax(3);
+    capacite.setDuree(1);
+    capacite.setPrecision(100);
+    capacite.setCoutEndurance(1);
+    return capacite;
   }
 }

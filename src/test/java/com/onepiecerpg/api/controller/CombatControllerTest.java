@@ -81,8 +81,8 @@ class CombatControllerTest {
   }
 
   @Test
-  @DisplayName("Doit utiliser un move")
-  void shouldUseMove() throws Exception {
+  @DisplayName("Doit utiliser un capacite")
+  void shouldUseCapacite() throws Exception {
     CombatResponse response = new CombatResponse(
         1L,
         "Bandit",
@@ -91,9 +91,9 @@ class CombatControllerTest {
         StatutCombat.EN_COURS,
         null);
 
-    when(combatService.utiliserMove(1L)).thenReturn(response);
+    when(combatService.utiliserCapacite(1L)).thenReturn(response);
 
-    mockMvc.perform(post("/api/combats/moves/1"))
+    mockMvc.perform(post("/api/combats/capacites/1"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.vieEnnemiActuelle").value(12))
         .andExpect(jsonPath("$.vieJoueurActuelle").value(8))
@@ -111,9 +111,9 @@ class CombatControllerTest {
         StatutCombat.VICTOIRE,
         new RecompenseCombatResponse(10));
 
-    when(combatService.utiliserMove(1L)).thenReturn(response);
+    when(combatService.utiliserCapacite(1L)).thenReturn(response);
 
-    mockMvc.perform(post("/api/combats/moves/1"))
+    mockMvc.perform(post("/api/combats/capacites/1"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.statut").value("VICTOIRE"))
         .andExpect(jsonPath("$.recompense.experience").value(10));

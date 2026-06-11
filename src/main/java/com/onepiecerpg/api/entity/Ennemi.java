@@ -49,6 +49,6 @@ public class Ennemi {
 
   @Builder.Default
   @ManyToMany
-  @JoinTable(name = "ennemi_move", joinColumns = @JoinColumn(name = "ennemi_id"), inverseJoinColumns = @JoinColumn(name = "move_id"))
-  private Set<Move> moves = new HashSet<>();
+  @JoinTable(name = "ennemi_capacite", joinColumns = @JoinColumn(name = "ennemi_id"), inverseJoinColumns = @JoinColumn(name = "capacite_id"))
+  private Set<Capacite> capacites = new HashSet<>();
 }

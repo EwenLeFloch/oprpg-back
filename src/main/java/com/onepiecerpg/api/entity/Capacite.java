@@ -5,13 +5,13 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 
 @Entity
-@Table(name = "move")
+@Table(name = "capacite")
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Move {
+public class Capacite {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,7 +25,7 @@ public class Move {
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
-  private TypeMove typeMove;
+  private TypeCapacite typeCapacite;
 
   @Min(1)
   @Column(nullable = false)
@@ -43,7 +43,7 @@ public class Move {
   @Builder.Default
   @Min(0)
   @Max(100)
-  @Column(name = "precision_move")
+  @Column(name = "precision_capacite")
   private Integer precision = 100;
 
   @PositiveOrZero

@@ -12,31 +12,31 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import com.onepiecerpg.api.entity.Move;
+import com.onepiecerpg.api.entity.Capacite;
 import com.onepiecerpg.api.entity.Personnage;
 import com.onepiecerpg.api.entity.ProgressionJoueur;
-import com.onepiecerpg.api.entity.TypeMove;
+import com.onepiecerpg.api.entity.TypeCapacite;
 import com.onepiecerpg.api.entity.Utilisateur;
 import com.onepiecerpg.api.exception.RessourceIntrouvableException;
-import com.onepiecerpg.api.repository.MoveRepository;
+import com.onepiecerpg.api.repository.CapaciteRepository;
 import com.onepiecerpg.api.repository.ProgressionJoueurRepository;
 import com.onepiecerpg.api.repository.UtilisateurRepository;
 
-class MoveServiceTest {
+class CapaciteServiceTest {
 
-  private MoveRepository moveRepository;
+  private CapaciteRepository capaciteRepository;
   private UtilisateurRepository utilisateurRepository;
   private ProgressionJoueurRepository progressionJoueurRepository;
-  private MoveService moveService;
+  private CapaciteService capaciteService;
 
   @BeforeEach
   void setUp() {
-    moveRepository = mock(MoveRepository.class);
+    capaciteRepository = mock(CapaciteRepository.class);
     utilisateurRepository = mock(UtilisateurRepository.class);
     progressionJoueurRepository = mock(ProgressionJoueurRepository.class);
 
-    moveService = new MoveService(
-        moveRepository,
+    capaciteService = new CapaciteService(
+        capaciteRepository,
         utilisateurRepository,
         progressionJoueurRepository);
 
@@ -44,61 +44,61 @@ class MoveServiceTest {
   }
 
   @Test
-  void shouldGetAllMoves() {
-    when(moveRepository.findAll()).thenReturn(List.of(new Move()));
+  void shouldGetAllCapacites() {
+    when(capaciteRepository.findAll()).thenReturn(List.of(new Capacite()));
 
-    assertThat(moveService.recupererTousLesMoves()).hasSize(1);
+    assertThat(capaciteService.recupererTousLesCapacites()).hasSize(1);
   }
 
   @Test
-  void shouldGetMoveById() {
-    Move move = new Move();
-    move.setId(1L);
-    move.setNom("Coup de poing");
+  void shouldGetCapaciteById() {
+    Capacite capacite = new Capacite();
+    capacite.setId(1L);
+    capacite.setNom("Coup de poing");
 
-    when(moveRepository.findById(1L)).thenReturn(Optional.of(move));
+    when(capaciteRepository.findById(1L)).thenReturn(Optional.of(capacite));
 
-    assertThat(moveService.recupererMoveParId(1L).getNom()).isEqualTo("Coup de poing");
+    assertThat(capaciteService.recupererCapaciteParId(1L).getNom()).isEqualTo("Coup de poing");
   }
 
   @Test
-  void shouldGetMoveByName() {
-    Move move = new Move();
-    move.setId(1L);
-    move.setNom("Coup de poing");
+  void shouldGetCapaciteByName() {
+    Capacite capacite = new Capacite();
+    capacite.setId(1L);
+    capacite.setNom("Coup de poing");
 
-    when(moveRepository.findByNom("Coup de poing")).thenReturn(Optional.of(move));
+    when(capaciteRepository.findByNom("Coup de poing")).thenReturn(Optional.of(capacite));
 
-    assertThat(moveService.recupererMoveParNom("Coup de poing").getId()).isEqualTo(1L);
+    assertThat(capaciteService.recupererCapaciteParNom("Coup de poing").getId()).isEqualTo(1L);
   }
 
   @Test
-  void shouldGetMovesByType() {
-    when(moveRepository.findByTypeMove(TypeMove.ATTAQUE)).thenReturn(List.of(new Move()));
+  void shouldGetCapacitesByType() {
+    when(capaciteRepository.findByTypeCapacite(TypeCapacite.ATTAQUE)).thenReturn(List.of(new Capacite()));
 
-    assertThat(moveService.recupererMovesParType(TypeMove.ATTAQUE)).hasSize(1);
+    assertThat(capaciteService.recupererCapacitesParType(TypeCapacite.ATTAQUE)).hasSize(1);
   }
 
   @Test
-  void shouldThrowWhenMoveNotFoundById() {
-    when(moveRepository.findById(1L)).thenReturn(Optional.empty());
+  void shouldThrowWhenCapaciteNotFoundById() {
+    when(capaciteRepository.findById(1L)).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> moveService.recupererMoveParId(1L))
+    assertThatThrownBy(() -> capaciteService.recupererCapaciteParId(1L))
         .isInstanceOf(RessourceIntrouvableException.class)
-        .hasMessage("Move introuvable");
+        .hasMessage("Capacite introuvable");
   }
 
   @Test
-  void shouldThrowWhenMoveNotFoundByName() {
-    when(moveRepository.findByNom("Inconnu")).thenReturn(Optional.empty());
+  void shouldThrowWhenCapaciteNotFoundByName() {
+    when(capaciteRepository.findByNom("Inconnu")).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> moveService.recupererMoveParNom("Inconnu"))
+    assertThatThrownBy(() -> capaciteService.recupererCapaciteParNom("Inconnu"))
         .isInstanceOf(RessourceIntrouvableException.class)
-        .hasMessage("Move introuvable");
+        .hasMessage("Capacite introuvable");
   }
 
   @Test
-  void shouldGetConnectedCharacterMoves() {
+  void shouldGetConnectedCharacterCapacites() {
     SecurityContextHolder.getContext().setAuthentication(
         new UsernamePasswordAuthenticationToken("test@test.com", null));
 
@@ -106,18 +106,18 @@ class MoveServiceTest {
     utilisateur.setId(1L);
     utilisateur.setEmail("test@test.com");
 
-    Move coupDePoing = new Move();
+    Capacite coupDePoing = new Capacite();
     coupDePoing.setId(2L);
     coupDePoing.setNom("Coup de poing");
 
-    Move coupDePied = new Move();
+    Capacite coupDePied = new Capacite();
     coupDePied.setId(1L);
     coupDePied.setNom("Coup de pied");
 
     Personnage personnage = new Personnage();
     personnage.setId(1L);
     personnage.setNom("Luffy");
-    personnage.setMoves(Set.of(coupDePoing, coupDePied));
+    personnage.setCapacites(Set.of(coupDePoing, coupDePied));
 
     ProgressionJoueur progression = new ProgressionJoueur();
     progression.setId(1L);
@@ -127,11 +127,11 @@ class MoveServiceTest {
     when(utilisateurRepository.findByEmail("test@test.com")).thenReturn(Optional.of(utilisateur));
     when(progressionJoueurRepository.findByUtilisateur(utilisateur)).thenReturn(Optional.of(progression));
 
-    List<Move> moves = moveService.recupererMovesPersonnageConnecte();
+    List<Capacite> capacites = capaciteService.recupererCapacitesPersonnageConnecte();
 
-    assertThat(moves)
+    assertThat(capacites)
         .hasSize(2)
-        .extracting(Move::getId)
+        .extracting(Capacite::getId)
         .containsExactly(1L, 2L);
   }
 
@@ -142,7 +142,7 @@ class MoveServiceTest {
 
     when(utilisateurRepository.findByEmail("missing@test.com")).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> moveService.recupererMovesPersonnageConnecte())
+    assertThatThrownBy(() -> capaciteService.recupererCapacitesPersonnageConnecte())
         .isInstanceOf(RessourceIntrouvableException.class)
         .hasMessage("Utilisateur non trouvé");
   }
@@ -159,7 +159,7 @@ class MoveServiceTest {
     when(utilisateurRepository.findByEmail("test@test.com")).thenReturn(Optional.of(utilisateur));
     when(progressionJoueurRepository.findByUtilisateur(utilisateur)).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> moveService.recupererMovesPersonnageConnecte())
+    assertThatThrownBy(() -> capaciteService.recupererCapacitesPersonnageConnecte())
         .isInstanceOf(RessourceIntrouvableException.class)
         .hasMessage("Progression du joueur non trouvée");
   }

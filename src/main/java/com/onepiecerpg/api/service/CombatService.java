@@ -9,7 +9,7 @@ import com.onepiecerpg.api.dto.CombatResponse;
 import com.onepiecerpg.api.dto.RecompenseCombatResponse;
 import com.onepiecerpg.api.entity.Combat;
 import com.onepiecerpg.api.entity.Ennemi;
-import com.onepiecerpg.api.entity.Move;
+import com.onepiecerpg.api.entity.Capacite;
 import com.onepiecerpg.api.entity.ProgressionJoueur;
 import com.onepiecerpg.api.entity.StatutCombat;
 import com.onepiecerpg.api.entity.Utilisateur;
@@ -60,12 +60,12 @@ public class CombatService {
     return convertir(recupererCombatEnCoursConnecte());
   }
 
-  public CombatResponse utiliserMove(Long moveId) {
+  public CombatResponse utiliserCapacite(Long capaciteId) {
     ProgressionJoueur progression = recupererProgressionConnectee();
     Combat combat = recupererCombatEnCours(progression);
-    Move move = recupererMoveJoueur(progression, moveId);
+    Capacite capacite = recupererCapaciteJoueur(progression, capaciteId);
 
-    appliquerMove(combat, progression, move);
+    appliquerCapacite(combat, progression, capacite);
     RecompenseCombatResponse recompense = verifierFinCombat(combat, progression);
 
     combatRepository.save(combat);
@@ -81,23 +81,23 @@ public class CombatService {
     return convertir(combatRepository.save(combat));
   }
 
-  private void appliquerMove(Combat combat, ProgressionJoueur progression, Move move) {
-    switch (move.getTypeMove()) {
-      case ATTAQUE -> appliquerAttaque(combat, progression, move);
-      case SOIN -> appliquerSoin(progression, move);
-      default -> throw new IllegalArgumentException("Type de move non géré pour le moment");
+  private void appliquerCapacite(Combat combat, ProgressionJoueur progression, Capacite capacite) {
+    switch (capacite.getTypeCapacite()) {
+      case ATTAQUE -> appliquerAttaque(combat, progression, capacite);
+      case SOIN -> appliquerSoin(progression, capacite);
+      default -> throw new IllegalArgumentException("Type de capacite non géré pour le moment");
     }
   }
 
-  private void appliquerAttaque(Combat combat, ProgressionJoueur progression, Move move) {
-    int degats = calculerDegats(progression, move);
+  private void appliquerAttaque(Combat combat, ProgressionJoueur progression, Capacite capacite) {
+    int degats = calculerDegats(progression, capacite);
     int nouvelleVieEnnemi = combat.getVieEnnemiActuelle() - degats;
 
     combat.setVieEnnemiActuelle(Math.max(0, nouvelleVieEnnemi));
   }
 
-  private void appliquerSoin(ProgressionJoueur progression, Move move) {
-    int soin = calculerSoin(move);
+  private void appliquerSoin(ProgressionJoueur progression, Capacite capacite) {
+    int soin = calculerSoin(capacite);
     int nouvelleVieJoueur = progression.getVieActuelle() + soin;
 
     progression.setVieActuelle(Math.min(progression.getVieMax(), nouvelleVieJoueur));
@@ -141,13 +141,13 @@ public class CombatService {
     return progression.getVieActuelle() <= 0;
   }
 
-  private int calculerDegats(ProgressionJoueur progression, Move move) {
-    int base = valeurAleatoireEntre(move.getValeurMin(), move.getValeurMax());
+  private int calculerDegats(ProgressionJoueur progression, Capacite capacite) {
+    int base = valeurAleatoireEntre(capacite.getValeurMin(), capacite.getValeurMax());
     return base + bonusPuissance(progression.getPuissance());
   }
 
-  private int calculerSoin(Move move) {
-    return valeurAleatoireEntre(move.getValeurMin(), move.getValeurMax());
+  private int calculerSoin(Capacite capacite) {
+    return valeurAleatoireEntre(capacite.getValeurMin(), capacite.getValeurMax());
   }
 
   private int bonusPuissance(int puissance) {
@@ -218,13 +218,13 @@ public class CombatService {
         .orElseThrow(() -> new RessourceIntrouvableException("Ennemi introuvable"));
   }
 
-  private Move recupererMoveJoueur(ProgressionJoueur progression, Long moveId) {
+  private Capacite recupererCapaciteJoueur(ProgressionJoueur progression, Long capaciteId) {
     return progression.getPersonnage()
-        .getMoves()
+        .getCapacites()
         .stream()
-        .filter(move -> move.getId().equals(moveId))
+        .filter(capacite -> capacite.getId().equals(capaciteId))
         .findFirst()
-        .orElseThrow(() -> new RessourceIntrouvableException("Move introuvable"));
+        .orElseThrow(() -> new RessourceIntrouvableException("Capacite introuvable"));
   }
 
   private ProgressionJoueur recupererProgressionConnectee() {
