@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.onepiecerpg.api.config.ClockConfig;
 import com.onepiecerpg.api.dto.CombatResponse;
+import com.onepiecerpg.api.dto.RecompenseCombatResponse;
 import com.onepiecerpg.api.entity.StatutCombat;
 import com.onepiecerpg.api.exception.GlobalExceptionHandler;
 import com.onepiecerpg.api.exception.RessourceIntrouvableException;
@@ -62,7 +63,8 @@ class CombatControllerTest {
         .andExpect(jsonPath("$.ennemi").value("Bandit"))
         .andExpect(jsonPath("$.vieEnnemiActuelle").value(20))
         .andExpect(jsonPath("$.vieJoueurActuelle").value(10))
-        .andExpect(jsonPath("$.statut").value("EN_COURS"));
+        .andExpect(jsonPath("$.statut").value("EN_COURS"))
+        .andExpect(jsonPath("$.recompense").isEmpty());
   }
 
   @Test
@@ -74,7 +76,8 @@ class CombatControllerTest {
 
     mockMvc.perform(get("/api/combats/en-cours"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.statut").value("EN_COURS"));
+        .andExpect(jsonPath("$.statut").value("EN_COURS"))
+        .andExpect(jsonPath("$.recompense").isEmpty());
   }
 
   @Test
@@ -85,14 +88,35 @@ class CombatControllerTest {
         "Bandit",
         12,
         8,
-        StatutCombat.EN_COURS);
+        StatutCombat.EN_COURS,
+        null);
 
     when(combatService.utiliserMove(1L)).thenReturn(response);
 
     mockMvc.perform(post("/api/combats/moves/1"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.vieEnnemiActuelle").value(12))
-        .andExpect(jsonPath("$.vieJoueurActuelle").value(8));
+        .andExpect(jsonPath("$.vieJoueurActuelle").value(8))
+        .andExpect(jsonPath("$.recompense").isEmpty());
+  }
+
+  @Test
+  @DisplayName("Doit retourner une récompense en cas de victoire")
+  void shouldReturnRewardWhenVictory() throws Exception {
+    CombatResponse response = new CombatResponse(
+        1L,
+        "Bandit",
+        0,
+        8,
+        StatutCombat.VICTOIRE,
+        new RecompenseCombatResponse(10));
+
+    when(combatService.utiliserMove(1L)).thenReturn(response);
+
+    mockMvc.perform(post("/api/combats/moves/1"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.statut").value("VICTOIRE"))
+        .andExpect(jsonPath("$.recompense.experience").value(10));
   }
 
   @Test
@@ -104,7 +128,8 @@ class CombatControllerTest {
 
     mockMvc.perform(post("/api/combats/fuite"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.statut").value("FUITE"));
+        .andExpect(jsonPath("$.statut").value("FUITE"))
+        .andExpect(jsonPath("$.recompense").isEmpty());
   }
 
   @Test
@@ -124,6 +149,7 @@ class CombatControllerTest {
         "Bandit",
         20,
         10,
-        statut);
+        statut,
+        null);
   }
 }

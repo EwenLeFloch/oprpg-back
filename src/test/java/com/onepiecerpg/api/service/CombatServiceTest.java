@@ -1,6 +1,8 @@
 package com.onepiecerpg.api.service;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 import java.util.HashSet;
@@ -79,6 +81,7 @@ class CombatServiceTest {
     assertThat(response.vieEnnemiActuelle()).isEqualTo(20);
     assertThat(response.vieJoueurActuelle()).isEqualTo(30);
     assertThat(response.statut()).isEqualTo(StatutCombat.EN_COURS);
+    assertThat(response.recompense()).isNull();
   }
 
   @Test
@@ -116,6 +119,7 @@ class CombatServiceTest {
     assertThat(response.vieEnnemiActuelle()).isEqualTo(13);
     assertThat(response.vieJoueurActuelle()).isEqualTo(27);
     assertThat(response.statut()).isEqualTo(StatutCombat.EN_COURS);
+    assertThat(response.recompense()).isNull();
   }
 
   @Test
@@ -156,6 +160,8 @@ class CombatServiceTest {
     CombatResponse response = combatService.utiliserMove(1L);
 
     assertThat(response.statut()).isEqualTo(StatutCombat.VICTOIRE);
+    assertThat(response.recompense()).isNotNull();
+    assertThat(response.recompense().experience()).isEqualTo(10);
     assertThat(progression.getExperience()).isEqualTo(35);
     assertThat(progression.getNiveau()).isEqualTo(2);
   }
@@ -179,6 +185,7 @@ class CombatServiceTest {
 
     assertThat(response.statut()).isEqualTo(StatutCombat.DEFAITE);
     assertThat(response.vieJoueurActuelle()).isZero();
+    assertThat(response.recompense()).isNull();
   }
 
   @Test
@@ -195,6 +202,7 @@ class CombatServiceTest {
     CombatResponse response = combatService.fuirCombat();
 
     assertThat(response.statut()).isEqualTo(StatutCombat.FUITE);
+    assertThat(response.recompense()).isNull();
   }
 
   private void mockProgressionConnectee(ProgressionJoueur progression) {

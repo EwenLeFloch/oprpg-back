@@ -6,6 +6,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.onepiecerpg.api.dto.CombatResponse;
+import com.onepiecerpg.api.dto.RecompenseCombatResponse;
 import com.onepiecerpg.api.entity.Combat;
 import com.onepiecerpg.api.entity.Ennemi;
 import com.onepiecerpg.api.entity.Move;
@@ -65,12 +66,12 @@ public class CombatService {
     Move move = recupererMoveJoueur(progression, moveId);
 
     appliquerMove(combat, progression, move);
-    verifierFinCombat(combat, progression);
+    RecompenseCombatResponse recompense = verifierFinCombat(combat, progression);
 
     combatRepository.save(combat);
     progressionJoueurRepository.save(progression);
 
-    return convertir(combat);
+    return convertir(combat, recompense);
   }
 
   public CombatResponse fuirCombat() {
@@ -102,10 +103,9 @@ public class CombatService {
     progression.setVieActuelle(Math.min(progression.getVieMax(), nouvelleVieJoueur));
   }
 
-  private void verifierFinCombat(Combat combat, ProgressionJoueur progression) {
+  private RecompenseCombatResponse verifierFinCombat(Combat combat, ProgressionJoueur progression) {
     if (ennemiEstVaincu(combat)) {
-      appliquerVictoire(combat, progression);
-      return;
+      return appliquerVictoire(combat, progression);
     }
 
     appliquerTourEnnemi(combat, progression);
@@ -113,13 +113,17 @@ public class CombatService {
     if (joueurEstVaincu(progression)) {
       combat.setStatut(StatutCombat.DEFAITE);
     }
+
+    return null;
   }
 
-  private void appliquerVictoire(Combat combat, ProgressionJoueur progression) {
+  private RecompenseCombatResponse appliquerVictoire(Combat combat, ProgressionJoueur progression) {
     combat.setStatut(StatutCombat.VICTOIRE);
 
     int experienceGagnee = calculerExperienceGagnee(combat.getEnnemi());
     appliquerExperience(progression, experienceGagnee);
+
+    return new RecompenseCombatResponse(experienceGagnee);
   }
 
   private void appliquerTourEnnemi(Combat combat, ProgressionJoueur progression) {
@@ -234,11 +238,16 @@ public class CombatService {
   }
 
   private CombatResponse convertir(Combat combat) {
+    return convertir(combat, null);
+  }
+
+  private CombatResponse convertir(Combat combat, RecompenseCombatResponse recompense) {
     return new CombatResponse(
         combat.getId(),
         combat.getEnnemi().getNom(),
         combat.getVieEnnemiActuelle(),
         combat.getProgressionJoueur().getVieActuelle(),
-        combat.getStatut());
+        combat.getStatut(),
+        recompense);
   }
 }

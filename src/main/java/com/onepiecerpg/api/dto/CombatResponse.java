@@ -4,11 +4,9 @@ import com.onepiecerpg.api.entity.StatutCombat;
 
 public record CombatResponse(
     Long combatId,
-
     String ennemi,
     int vieEnnemiActuelle,
-
     int vieJoueurActuelle,
-    StatutCombat statut) {
-
+    StatutCombat statut,
+    RecompenseCombatResponse recompense) {
 }
