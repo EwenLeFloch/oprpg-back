@@ -1,5 +1,6 @@
 package com.onepiecerpg.api.dto;
 
 public record RecompenseCombatResponse(
-    int experience) {
+    int experience,
+    long prime) {
 }

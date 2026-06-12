@@ -85,8 +85,6 @@ class EnnemiRepositoryTest {
     ennemi.setNom(nom);
     ennemi.setVieMax(20);
     ennemi.setPuissance(3);
-    ennemi.setExperienceMin(5);
-    ennemi.setExperienceMax(10);
     ennemi.setBoss(boss);
     ennemi.setZone(zone);
     return ennemi;

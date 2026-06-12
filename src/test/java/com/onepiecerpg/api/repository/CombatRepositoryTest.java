@@ -71,6 +71,34 @@ class CombatRepositoryTest {
     assertThat(result.get().getStatut()).isEqualTo(StatutCombat.EN_COURS);
   }
 
+  @Test
+  void shouldCheckBossAlreadyDefeated() {
+    ProgressionJoueur progression = progressionJoueurRepository.save(progression());
+    Ennemi boss = ennemiRepository.save(bossEnnemi(progression.getZone()));
+
+    combatRepository.save(combat(progression, boss, StatutCombat.VICTOIRE));
+
+    boolean result = combatRepository.existsByProgressionJoueurIdAndEnnemiIdAndStatut(
+        progression.getId(),
+        boss.getId(),
+        StatutCombat.VICTOIRE);
+
+    assertThat(result).isTrue();
+  }
+
+  @Test
+  void shouldReturnFalseWhenBossNotDefeated() {
+    ProgressionJoueur progression = progressionJoueurRepository.save(progression());
+    Ennemi boss = ennemiRepository.save(bossEnnemi(progression.getZone()));
+
+    boolean result = combatRepository.existsByProgressionJoueurIdAndEnnemiIdAndStatut(
+        progression.getId(),
+        boss.getId(),
+        StatutCombat.VICTOIRE);
+
+    assertThat(result).isFalse();
+  }
+
   private ProgressionJoueur progression() {
     Utilisateur utilisateur = utilisateurRepository.save(utilisateur());
     Personnage personnage = personnageRepository.save(personnage());
@@ -126,8 +154,6 @@ class CombatRepositoryTest {
     ennemi.setNom("Bandit");
     ennemi.setVieMax(20);
     ennemi.setPuissance(3);
-    ennemi.setExperienceMin(5);
-    ennemi.setExperienceMax(10);
     ennemi.setBoss(false);
     ennemi.setZone(zone);
     return ennemi;
@@ -143,5 +169,15 @@ class CombatRepositoryTest {
     combat.setVieEnnemiActuelle(ennemi.getVieMax());
     combat.setStatut(statut);
     return combat;
+  }
+
+  private Ennemi bossEnnemi(Zone zone) {
+    Ennemi ennemi = new Ennemi();
+    ennemi.setNom("Higuma");
+    ennemi.setVieMax(50);
+    ennemi.setPuissance(8);
+    ennemi.setBoss(true);
+    ennemi.setZone(zone);
+    return ennemi;
   }
 }

@@ -12,5 +12,7 @@ public interface EnnemiRepository extends JpaRepository<Ennemi, Long> {
 
   List<Ennemi> findByZoneIdAndBossFalse(Long zoneId);
 
+  Optional<Ennemi> findByZoneIdAndBossTrue(Long zoneId);
+
   Optional<Ennemi> findByNom(String nom);
 }

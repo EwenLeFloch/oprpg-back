@@ -16,9 +16,9 @@ public class CombatController {
     this.combatService = combatService;
   }
 
-  @PostMapping("/ennemis/{ennemiId}")
-  public ResponseEntity<CombatResponse> demarrerCombat(@PathVariable Long ennemiId) {
-    return ResponseEntity.ok(combatService.demarrerCombat(ennemiId));
+  @PostMapping("/zones/{zoneId}")
+  public ResponseEntity<CombatResponse> demarrerCombat(@PathVariable Long zoneId) {
+    return ResponseEntity.ok(combatService.demarrerCombat(zoneId));
   }
 
   @GetMapping("/en-cours")

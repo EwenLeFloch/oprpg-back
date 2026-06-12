@@ -18,6 +18,6 @@ public record ProgressionJoueurResponse(
     Long prime,
 
     String personnage,
-    String faction) {
-
+    String faction,
+    Long zoneId) {
 }

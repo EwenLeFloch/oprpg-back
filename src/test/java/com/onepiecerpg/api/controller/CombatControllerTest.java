@@ -51,13 +51,13 @@ class CombatControllerTest {
   private JwtAuthenticationFilter jwtAuthenticationFilter;
 
   @Test
-  @DisplayName("Doit démarrer un combat")
+  @DisplayName("Doit démarrer un combat dans une zone")
   void shouldStartCombat() throws Exception {
     CombatResponse response = combatResponse(StatutCombat.EN_COURS);
 
     when(combatService.demarrerCombat(1L)).thenReturn(response);
 
-    mockMvc.perform(post("/api/combats/ennemis/1"))
+    mockMvc.perform(post("/api/combats/zones/1"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.combatId").value(1))
         .andExpect(jsonPath("$.ennemi").value("Bandit"))
@@ -81,7 +81,7 @@ class CombatControllerTest {
   }
 
   @Test
-  @DisplayName("Doit utiliser un capacite")
+  @DisplayName("Doit utiliser une capacité")
   void shouldUseCapacite() throws Exception {
     CombatResponse response = new CombatResponse(
         1L,
@@ -109,14 +109,15 @@ class CombatControllerTest {
         0,
         8,
         StatutCombat.VICTOIRE,
-        new RecompenseCombatResponse(10));
+        new RecompenseCombatResponse(10, 100L));
 
     when(combatService.utiliserCapacite(1L)).thenReturn(response);
 
     mockMvc.perform(post("/api/combats/capacites/1"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.statut").value("VICTOIRE"))
-        .andExpect(jsonPath("$.recompense.experience").value(10));
+        .andExpect(jsonPath("$.recompense.experience").value(10))
+        .andExpect(jsonPath("$.recompense.prime").value(100));
   }
 
   @Test
@@ -141,6 +142,28 @@ class CombatControllerTest {
     mockMvc.perform(get("/api/combats/en-cours"))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.message").value("Aucun combat en cours"));
+  }
+
+  @Test
+  @DisplayName("Doit retourner 409 si zone verrouillée (boss déjà vaincu)")
+  void shouldReturnConflictWhenZoneLocked() throws Exception {
+    when(combatService.demarrerCombat(1L))
+        .thenThrow(new IllegalStateException("Le boss de cette zone a déjà été vaincu. Passez à la zone suivante."));
+
+    mockMvc.perform(post("/api/combats/zones/1"))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.message").value("Le boss de cette zone a déjà été vaincu. Passez à la zone suivante."));
+  }
+
+  @Test
+  @DisplayName("Doit retourner 409 si niveau insuffisant")
+  void shouldReturnConflictWhenLevelTooLow() throws Exception {
+    when(combatService.demarrerCombat(1L))
+        .thenThrow(new IllegalStateException("Niveau insuffisant pour accéder à cette zone (requis : 5)"));
+
+    mockMvc.perform(post("/api/combats/zones/1"))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.message").value("Niveau insuffisant pour accéder à cette zone (requis : 5)"));
   }
 
   private CombatResponse combatResponse(StatutCombat statut) {

@@ -1,33 +1,22 @@
 package com.onepiecerpg.api.service;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.onepiecerpg.api.dto.CombatResponse;
-import com.onepiecerpg.api.entity.Combat;
-import com.onepiecerpg.api.entity.Ennemi;
-import com.onepiecerpg.api.entity.Capacite;
-import com.onepiecerpg.api.entity.Personnage;
-import com.onepiecerpg.api.entity.ProgressionJoueur;
-import com.onepiecerpg.api.entity.StatutCombat;
-import com.onepiecerpg.api.entity.TypeCapacite;
-import com.onepiecerpg.api.entity.Utilisateur;
-import com.onepiecerpg.api.repository.CombatRepository;
-import com.onepiecerpg.api.repository.EnnemiRepository;
-import com.onepiecerpg.api.repository.ProgressionJoueurRepository;
-import com.onepiecerpg.api.repository.UtilisateurRepository;
+import com.onepiecerpg.api.entity.*;
+import com.onepiecerpg.api.repository.*;
 
 class CombatServiceTest {
 
@@ -35,6 +24,7 @@ class CombatServiceTest {
   private EnnemiRepository ennemiRepository;
   private ProgressionJoueurRepository progressionJoueurRepository;
   private UtilisateurRepository utilisateurRepository;
+  private ZoneRepository zoneRepository;
   private CombatService combatService;
 
   @BeforeEach
@@ -43,45 +33,136 @@ class CombatServiceTest {
     ennemiRepository = mock(EnnemiRepository.class);
     progressionJoueurRepository = mock(ProgressionJoueurRepository.class);
     utilisateurRepository = mock(UtilisateurRepository.class);
+    zoneRepository = mock(ZoneRepository.class);
 
     combatService = new CombatService(
         combatRepository,
         ennemiRepository,
         progressionJoueurRepository,
-        utilisateurRepository);
+        utilisateurRepository,
+        zoneRepository);
 
     SecurityContextHolder.getContext().setAuthentication(
         new UsernamePasswordAuthenticationToken("test@test.com", null));
   }
 
-  @AfterEach
+  @BeforeEach
   void tearDown() {
     SecurityContextHolder.clearContext();
   }
 
+  // -------------------------------------------------------------------------
+  // Tests formule XP
+  // -------------------------------------------------------------------------
+
   @Test
-  void shouldStartCombat() {
-    ProgressionJoueur progression = progression();
-    Ennemi ennemi = ennemi("Bandit", 20, 3, 5, 5);
+  void experienceRequise_shouldBeCorrectAtLevel1() {
+    // 30 * 1^1.645 = 30
+    assertThat(combatService.experienceRequise(1)).isEqualTo(30);
+  }
+
+  @Test
+  void experienceRequise_shouldGrowWithLevel() {
+    int xpNiveau1 = combatService.experienceRequise(1);
+    int xpNiveau10 = combatService.experienceRequise(10);
+    int xpNiveau50 = combatService.experienceRequise(50);
+
+    assertThat(xpNiveau10).isGreaterThan(xpNiveau1);
+    assertThat(xpNiveau50).isGreaterThan(xpNiveau10);
+  }
+
+  // -------------------------------------------------------------------------
+  // Tests combat
+  // -------------------------------------------------------------------------
+
+  // Remplacer shouldStartCombat et ajouter les nouveaux tests
+  // (uniquement les méthodes modifiées/ajoutées — le reste du fichier est
+  // identique au point 1)
+
+  @Test
+  void shouldStartCombatWithRandomEnemy() {
+    ProgressionJoueur progression = progression(); // niveau 1
+    Zone zone = zone(1);
+    Ennemi ennemi = ennemi("Bandit", false, zone);
 
     mockProgressionConnectee(progression);
+    when(zoneRepository.findById(1L)).thenReturn(Optional.of(zone));
     when(combatRepository.findByProgressionJoueurIdAndStatut(1L, StatutCombat.EN_COURS))
         .thenReturn(Optional.empty());
-    when(ennemiRepository.findById(1L)).thenReturn(Optional.of(ennemi));
-    when(combatRepository.save(any(Combat.class))).thenAnswer(invocation -> {
-      Combat combat = invocation.getArgument(0);
-      combat.setId(1L);
-      return combat;
+    when(ennemiRepository.findByZoneIdAndBossTrue(1L)).thenReturn(Optional.empty());
+    when(ennemiRepository.findByZoneIdAndBossFalse(1L)).thenReturn(List.of(ennemi));
+    when(combatRepository.save(any(Combat.class))).thenAnswer(inv -> {
+      Combat c = inv.getArgument(0);
+      c.setId(1L);
+      return c;
     });
 
     CombatResponse response = combatService.demarrerCombat(1L);
 
-    assertThat(response.combatId()).isEqualTo(1L);
     assertThat(response.ennemi()).isEqualTo("Bandit");
-    assertThat(response.vieEnnemiActuelle()).isEqualTo(20);
-    assertThat(response.vieJoueurActuelle()).isEqualTo(30);
     assertThat(response.statut()).isEqualTo(StatutCombat.EN_COURS);
-    assertThat(response.recompense()).isNull();
+  }
+
+  @Test
+  void shouldImposeBossWhenLevelReached() {
+    ProgressionJoueur progression = progression();
+    progression.setNiveau(5); // niveau requis de la zone = 5
+
+    Zone zone = zone(5);
+    Ennemi boss = ennemi("Higuma", true, zone);
+
+    mockProgressionConnectee(progression);
+    when(zoneRepository.findById(1L)).thenReturn(Optional.of(zone));
+    when(combatRepository.findByProgressionJoueurIdAndStatut(1L, StatutCombat.EN_COURS))
+        .thenReturn(Optional.empty());
+    when(ennemiRepository.findByZoneIdAndBossTrue(1L)).thenReturn(Optional.of(boss));
+    when(combatRepository.existsByProgressionJoueurIdAndEnnemiIdAndStatut(1L, 1L, StatutCombat.VICTOIRE))
+        .thenReturn(false);
+    when(combatRepository.save(any(Combat.class))).thenAnswer(inv -> {
+      Combat c = inv.getArgument(0);
+      c.setId(1L);
+      return c;
+    });
+
+    CombatResponse response = combatService.demarrerCombat(1L);
+
+    assertThat(response.ennemi()).isEqualTo("Higuma");
+  }
+
+  @Test
+  void shouldBlockZoneWhenBossAlreadyDefeated() {
+    ProgressionJoueur progression = progression();
+    progression.setNiveau(5);
+
+    Zone zone = zone(5);
+    Ennemi boss = ennemi("Higuma", true, zone);
+
+    mockProgressionConnectee(progression);
+    when(zoneRepository.findById(1L)).thenReturn(Optional.of(zone));
+    when(combatRepository.findByProgressionJoueurIdAndStatut(1L, StatutCombat.EN_COURS))
+        .thenReturn(Optional.empty());
+    when(ennemiRepository.findByZoneIdAndBossTrue(1L)).thenReturn(Optional.of(boss));
+    when(combatRepository.existsByProgressionJoueurIdAndEnnemiIdAndStatut(1L, 1L, StatutCombat.VICTOIRE))
+        .thenReturn(true); // boss déjà vaincu
+
+    assertThatThrownBy(() -> combatService.demarrerCombat(1L))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("boss");
+  }
+
+  @Test
+  void shouldRejectAccessWhenLevelTooLow() {
+    ProgressionJoueur progression = progression(); // niveau 1
+    Zone zone = zone(5); // niveau requis 5
+
+    mockProgressionConnectee(progression);
+    when(zoneRepository.findById(1L)).thenReturn(Optional.of(zone));
+    when(combatRepository.findByProgressionJoueurIdAndStatut(1L, StatutCombat.EN_COURS))
+        .thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> combatService.demarrerCombat(1L))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("Niveau insuffisant");
   }
 
   @Test
@@ -102,12 +183,12 @@ class CombatServiceTest {
   @Test
   void shouldAttackEnemy() {
     ProgressionJoueur progression = progression();
-    progression.setPuissance(4);
+    progression.setPuissance(4); // bonus sqrt(4) = 2
 
     Capacite attaque = capacite(1L, TypeCapacite.ATTAQUE, 5, 5);
     progression.getPersonnage().setCapacites(new HashSet<>(Set.of(attaque)));
 
-    Ennemi ennemi = ennemi("Bandit", 20, 3, 5, 5);
+    Ennemi ennemi = ennemi("Bandit", false, zone(1));
     Combat combat = combat(progression, ennemi, 20);
 
     mockProgressionConnectee(progression);
@@ -116,6 +197,8 @@ class CombatServiceTest {
 
     CombatResponse response = combatService.utiliserCapacite(1L);
 
+    // dégâts = 5 + sqrt(4) = 7 → vie ennemi = 20 - 7 = 13
+    // tour ennemi : puissance ennemi = 3 → vie joueur = 30 - 3 = 27
     assertThat(response.vieEnnemiActuelle()).isEqualTo(13);
     assertThat(response.vieJoueurActuelle()).isEqualTo(27);
     assertThat(response.statut()).isEqualTo(StatutCombat.EN_COURS);
@@ -130,7 +213,7 @@ class CombatServiceTest {
     Capacite soin = capacite(1L, TypeCapacite.SOIN, 5, 5);
     progression.getPersonnage().setCapacites(new HashSet<>(Set.of(soin)));
 
-    Ennemi ennemi = ennemi("Bandit", 20, 3, 5, 5);
+    Ennemi ennemi = ennemi("Bandit", false, zone(1));
     Combat combat = combat(progression, ennemi, 20);
 
     mockProgressionConnectee(progression);
@@ -139,18 +222,20 @@ class CombatServiceTest {
 
     CombatResponse response = combatService.utiliserCapacite(1L);
 
+    // soin = 5, puis tour ennemi - 3 → 20 + 5 - 3 = 22
     assertThat(response.vieJoueurActuelle()).isEqualTo(22);
   }
 
   @Test
-  void shouldWinCombatAndGainExperience() {
+  void shouldWinCombatAndGainRewards() {
     ProgressionJoueur progression = progression();
-    progression.setExperience(25);
+    progression.setExperience(0);
 
     Capacite attaque = capacite(1L, TypeCapacite.ATTAQUE, 50, 50);
     progression.getPersonnage().setCapacites(new HashSet<>(Set.of(attaque)));
 
-    Ennemi ennemi = ennemi("Bandit", 20, 3, 10, 10);
+    Zone zone = zone(5); // niveauRequis = 5
+    Ennemi ennemi = ennemi("Bandit", false, zone);
     Combat combat = combat(progression, ennemi, 20);
 
     mockProgressionConnectee(progression);
@@ -161,9 +246,33 @@ class CombatServiceTest {
 
     assertThat(response.statut()).isEqualTo(StatutCombat.VICTOIRE);
     assertThat(response.recompense()).isNotNull();
-    assertThat(response.recompense().experience()).isEqualTo(10);
-    assertThat(progression.getExperience()).isEqualTo(35);
-    assertThat(progression.getNiveau()).isEqualTo(2);
+    // xpMin = 6*5=30, xpMax = 9*5=45
+    assertThat(response.recompense().experience()).isBetween(30, 45);
+    // primeMin = 50*5=250, primeMax = 80*5=400
+    assertThat(response.recompense().prime()).isBetween(250L, 400L);
+  }
+
+  @Test
+  void shouldApplyBossMultiplierOnRewards() {
+    ProgressionJoueur progression = progression();
+
+    Capacite attaque = capacite(1L, TypeCapacite.ATTAQUE, 50, 50);
+    progression.getPersonnage().setCapacites(new HashSet<>(Set.of(attaque)));
+
+    Zone zone = zone(5);
+    Ennemi boss = ennemi("Higuma", true, zone); // boss = true
+    Combat combat = combat(progression, boss, 20);
+
+    mockProgressionConnectee(progression);
+    when(combatRepository.findByProgressionJoueurIdAndStatut(1L, StatutCombat.EN_COURS))
+        .thenReturn(Optional.of(combat));
+
+    CombatResponse response = combatService.utiliserCapacite(1L);
+
+    assertThat(response.statut()).isEqualTo(StatutCombat.VICTOIRE);
+    // xpMin boss = round(6*5*2.5)=75, xpMax boss = round(9*5*2.5)=113
+    assertThat(response.recompense().experience()).isBetween(75, 113);
+    assertThat(response.recompense().prime()).isBetween(625L, 1000L);
   }
 
   @Test
@@ -174,7 +283,8 @@ class CombatServiceTest {
     Capacite attaque = capacite(1L, TypeCapacite.ATTAQUE, 1, 1);
     progression.getPersonnage().setCapacites(new HashSet<>(Set.of(attaque)));
 
-    Ennemi ennemi = ennemi("Bandit", 50, 10, 5, 5);
+    Ennemi ennemi = ennemi("Bandit", false, zone(1));
+    ennemi.setPuissance(10);
     Combat combat = combat(progression, ennemi, 50);
 
     mockProgressionConnectee(progression);
@@ -191,7 +301,7 @@ class CombatServiceTest {
   @Test
   void shouldFleeCombat() {
     ProgressionJoueur progression = progression();
-    Ennemi ennemi = ennemi("Bandit", 20, 3, 5, 5);
+    Ennemi ennemi = ennemi("Bandit", false, zone(1));
     Combat combat = combat(progression, ennemi, 20);
 
     mockProgressionConnectee(progression);
@@ -205,62 +315,79 @@ class CombatServiceTest {
     assertThat(response.recompense()).isNull();
   }
 
+  // -------------------------------------------------------------------------
+  // Helpers
+  // -------------------------------------------------------------------------
+
   private void mockProgressionConnectee(ProgressionJoueur progression) {
     Utilisateur utilisateur = utilisateur();
-
     when(utilisateurRepository.findByEmail("test@test.com")).thenReturn(Optional.of(utilisateur));
     when(progressionJoueurRepository.findByUtilisateur(utilisateur)).thenReturn(Optional.of(progression));
   }
 
   private Utilisateur utilisateur() {
-    Utilisateur utilisateur = new Utilisateur();
-    utilisateur.setId(1L);
-    utilisateur.setEmail("test@test.com");
-    return utilisateur;
+    Utilisateur u = new Utilisateur();
+    u.setId(1L);
+    u.setEmail("test@test.com");
+    return u;
+  }
+
+  private Zone zone(int niveauRequis) {
+    Ile ile = new Ile();
+    ile.setId(1L);
+    ile.setNom("Dawn Island");
+    ile.setNiveauRequis(1);
+
+    Zone zone = new Zone();
+    zone.setId(1L);
+    zone.setNom("Village Fuschia");
+    zone.setNiveauRequis(niveauRequis);
+    zone.setIle(ile);
+    return zone;
   }
 
   private ProgressionJoueur progression() {
     Personnage personnage = new Personnage();
     personnage.setId(1L);
     personnage.setNom("Luffy");
+    personnage.setCapacites(new HashSet<>());
 
-    ProgressionJoueur progression = new ProgressionJoueur();
-    progression.setId(1L);
-    progression.setUtilisateur(utilisateur());
-    progression.setPersonnage(personnage);
-    progression.setNiveau(1);
-    progression.setExperience(0);
-    progression.setPuissance(1);
-    progression.setVieMax(30);
-    progression.setVieActuelle(30);
-    progression.setEnduranceMax(10);
-    progression.setEnduranceActuelle(10);
-    progression.setBerries(0);
-    progression.setPrime(0L);
-
-    return progression;
+    ProgressionJoueur p = new ProgressionJoueur();
+    p.setId(1L);
+    p.setUtilisateur(utilisateur());
+    p.setPersonnage(personnage);
+    p.setNiveau(1);
+    p.setExperience(0);
+    p.setPuissance(1);
+    p.setVieMax(30);
+    p.setVieActuelle(30);
+    p.setEnduranceMax(10);
+    p.setEnduranceActuelle(10);
+    p.setBerries(0);
+    p.setPrime(0L);
+    return p;
   }
 
-  private Ennemi ennemi(String nom, int vieMax, int puissance, int experienceMin, int experienceMax) {
-    Ennemi ennemi = new Ennemi();
-    ennemi.setId(1L);
-    ennemi.setNom(nom);
-    ennemi.setVieMax(vieMax);
-    ennemi.setPuissance(puissance);
-    ennemi.setExperienceMin(experienceMin);
-    ennemi.setExperienceMax(experienceMax);
-    return ennemi;
+  private Ennemi ennemi(String nom, boolean boss, Zone zone) {
+    Ennemi e = new Ennemi();
+    e.setId(1L);
+    e.setNom(nom);
+    e.setVieMax(20);
+    e.setPuissance(3);
+    e.setBoss(boss);
+    e.setZone(zone);
+    return e;
   }
 
-  private Capacite capacite(Long id, TypeCapacite typeCapacite, int valeurMin, int valeurMax) {
-    Capacite capacite = new Capacite();
-    capacite.setId(id);
-    capacite.setNom("Capacite test");
-    capacite.setTypeCapacite(typeCapacite);
-    capacite.setValeurMin(valeurMin);
-    capacite.setValeurMax(valeurMax);
-    capacite.setCoutEndurance(1);
-    return capacite;
+  private Capacite capacite(Long id, TypeCapacite type, int valeurMin, int valeurMax) {
+    Capacite c = new Capacite();
+    c.setId(id);
+    c.setNom("Capacite test");
+    c.setTypeCapacite(type);
+    c.setValeurMin(valeurMin);
+    c.setValeurMax(valeurMax);
+    c.setCoutEndurance(1);
+    return c;
   }
 
   private Combat combat(ProgressionJoueur progression, Ennemi ennemi, int vieEnnemiActuelle) {

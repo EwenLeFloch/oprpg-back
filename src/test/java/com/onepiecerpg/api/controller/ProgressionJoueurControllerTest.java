@@ -88,17 +88,10 @@ class ProgressionJoueurControllerTest {
 
   private ProgressionJoueurResponse progressionResponse(String faction) {
     return new ProgressionJoueurResponse(
-        1L,
-        1,
-        0,
-        10,
-        10,
-        1,
-        10,
-        10,
-        0,
-        0L,
+        1L, 1, 0, 10, 10, 1, 10, 10, 0, 0L,
         "Luffy",
-        faction);
+        faction,
+        1L); // zoneId
+
   }
 }

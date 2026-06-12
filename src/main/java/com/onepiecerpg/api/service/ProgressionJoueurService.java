@@ -101,6 +101,7 @@ public class ProgressionJoueurService {
         progression.getBerries(),
         progression.getPrime(),
         progression.getPersonnage().getNom(),
-        progression.getFaction() == null ? null : progression.getFaction().getNom());
+        progression.getFaction() == null ? null : progression.getFaction().getNom(),
+        progression.getZone().getId());
   }
 }
