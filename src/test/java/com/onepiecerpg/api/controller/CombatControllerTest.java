@@ -83,13 +83,7 @@ class CombatControllerTest {
   @Test
   @DisplayName("Doit utiliser une capacité")
   void shouldUseCapacite() throws Exception {
-    CombatResponse response = new CombatResponse(
-        1L,
-        "Bandit",
-        12,
-        8,
-        StatutCombat.EN_COURS,
-        null);
+    CombatResponse response = new CombatResponse(1L, "Bandit", 12, 8, 7, StatutCombat.EN_COURS, null);
 
     when(combatService.utiliserCapacite(1L)).thenReturn(response);
 
@@ -97,6 +91,7 @@ class CombatControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.vieEnnemiActuelle").value(12))
         .andExpect(jsonPath("$.vieJoueurActuelle").value(8))
+        .andExpect(jsonPath("$.enduranceActuelle").value(7))
         .andExpect(jsonPath("$.recompense").isEmpty());
   }
 
@@ -104,12 +99,7 @@ class CombatControllerTest {
   @DisplayName("Doit retourner une récompense en cas de victoire")
   void shouldReturnRewardWhenVictory() throws Exception {
     CombatResponse response = new CombatResponse(
-        1L,
-        "Bandit",
-        0,
-        8,
-        StatutCombat.VICTOIRE,
-        new RecompenseCombatResponse(10, 100L));
+        1L, "Bandit", 0, 8, 7, StatutCombat.VICTOIRE, new RecompenseCombatResponse(10, 100L));
 
     when(combatService.utiliserCapacite(1L)).thenReturn(response);
 
@@ -167,12 +157,6 @@ class CombatControllerTest {
   }
 
   private CombatResponse combatResponse(StatutCombat statut) {
-    return new CombatResponse(
-        1L,
-        "Bandit",
-        20,
-        10,
-        statut,
-        null);
+    return new CombatResponse(1L, "Bandit", 20, 10, 8, statut, null);
   }
 }

@@ -41,4 +41,20 @@ public class Combat {
   private LocalDateTime dateCreation = LocalDateTime.now();
 
   private LocalDateTime dateFin;
+
+  @Builder.Default
+  @Column(nullable = false)
+  private double boostMultiplicateurJoueur = 1.0;
+
+  @Builder.Default
+  @Column(nullable = false)
+  private double boostMultiplicateurEnnemi = 1.0;
+
+  @Builder.Default
+  @Column(nullable = false)
+  private int toursParalysieJoueur = 0;
+
+  @Builder.Default
+  @Column(nullable = false)
+  private int toursParalysieEnnemi = 0;
 }

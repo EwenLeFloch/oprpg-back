@@ -7,6 +7,7 @@ public record CombatResponse(
     String ennemi,
     int vieEnnemiActuelle,
     int vieJoueurActuelle,
+    int enduranceActuelle,
     StatutCombat statut,
     RecompenseCombatResponse recompense) {
 }

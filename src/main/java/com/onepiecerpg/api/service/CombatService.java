@@ -1,6 +1,7 @@
 package com.onepiecerpg.api.service;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -8,11 +9,13 @@ import org.springframework.stereotype.Service;
 
 import com.onepiecerpg.api.dto.CombatResponse;
 import com.onepiecerpg.api.dto.RecompenseCombatResponse;
+import com.onepiecerpg.api.dto.TourResultat;
 import com.onepiecerpg.api.entity.Capacite;
 import com.onepiecerpg.api.entity.Combat;
 import com.onepiecerpg.api.entity.Ennemi;
 import com.onepiecerpg.api.entity.ProgressionJoueur;
 import com.onepiecerpg.api.entity.StatutCombat;
+import com.onepiecerpg.api.entity.TypeCapacite;
 import com.onepiecerpg.api.entity.Utilisateur;
 import com.onepiecerpg.api.entity.Zone;
 import com.onepiecerpg.api.exception.RessourceIntrouvableException;
@@ -37,6 +40,7 @@ public class CombatService {
 
   private static final double EXP_BASE = 30.0;
   private static final double EXP_EXPOSANT = 1.645;
+  private static final double BOOST_MULTIPLICATEUR = 1.3;
 
   private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -59,17 +63,10 @@ public class CombatService {
     this.zoneRepository = zoneRepository;
   }
 
-  /**
-   * Démarre un combat dans la zone donnée.
-   * - Si le joueur a atteint le niveauRequis de la zone et que le boss n'est pas
-   * encore vaincu
-   * dans cette progression → le boss est imposé.
-   * - Sinon → ennemi classique aléatoire parmi ceux de la zone.
-   * - Si le boss a déjà été vaincu → zone verrouillée, exception.
-   */
   public CombatResponse demarrerCombat(Long zoneId) {
     ProgressionJoueur progression = recupererProgressionConnectee();
     verifierAucunCombatEnCours(progression);
+    verifierEnduranceSuffisante(progression);
 
     Zone zone = recupererZone(zoneId);
     verifierAccesZone(progression, zone);
@@ -91,9 +88,36 @@ public class CombatService {
   public CombatResponse utiliserCapacite(Long capaciteId) {
     ProgressionJoueur progression = recupererProgressionConnectee();
     Combat combat = recupererCombatEnCours(progression);
-    Capacite capacite = recupererCapaciteJoueur(progression, capaciteId);
+    Capacite capaciteJoueur = recupererCapaciteJoueur(progression, capaciteId);
 
-    appliquerCapacite(combat, progression, capacite);
+    verifierCoutEndurance(progression, capaciteJoueur);
+    verifierNonParalyse(combat);
+
+    TourResultat actionJoueur = calculerAction(
+        capaciteJoueur, progression.getPuissance(), combat.getBoostMultiplicateurJoueur());
+    TourResultat actionEnnemi = calculerActionEnnemi(combat);
+
+    consommerEndurance(progression, capaciteJoueur);
+
+    if (actionJoueur.reussi() && capaciteJoueur.getTypeCapacite() == TypeCapacite.BOOST) {
+      combat.setBoostMultiplicateurJoueur(
+          combat.getBoostMultiplicateurJoueur() * BOOST_MULTIPLICATEUR);
+    }
+    if (actionEnnemi.reussi() && actionEnnemi.type() == TypeCapacite.BOOST) {
+      combat.setBoostMultiplicateurEnnemi(
+          combat.getBoostMultiplicateurEnnemi() * BOOST_MULTIPLICATEUR);
+    }
+
+    appliquerActionSurEnnemi(actionJoueur, actionEnnemi, combat);
+    appliquerActionSurJoueur(actionEnnemi, actionJoueur, combat, progression);
+
+    if (combat.getToursParalysieJoueur() > 0) {
+      combat.setToursParalysieJoueur(combat.getToursParalysieJoueur() - 1);
+    }
+    if (combat.getToursParalysieEnnemi() > 0) {
+      combat.setToursParalysieEnnemi(combat.getToursParalysieEnnemi() - 1);
+    }
+
     RecompenseCombatResponse recompense = verifierFinCombat(combat, progression);
 
     combatRepository.save(combat);
@@ -108,91 +132,129 @@ public class CombatService {
     return convertir(combatRepository.save(combat));
   }
 
-  // -------------------------------------------------------------------------
-  // Choix de l'ennemi
-  // -------------------------------------------------------------------------
-
-  private Ennemi choisirEnnemi(ProgressionJoueur progression, Zone zone) {
-    boolean bossDisponible = bossEstDisponible(progression, zone);
-    boolean bossDejaVaincu = bossDejaVaincu(progression, zone);
-
-    if (bossDejaVaincu) {
-      throw new IllegalStateException("Le boss de cette zone a déjà été vaincu. Passez à la zone suivante.");
+  private TourResultat calculerAction(Capacite capacite, int puissance, double boostMultiplicateur) {
+    if (!capaciteAtteintSaCible(capacite)) {
+      return TourResultat.rate();
     }
 
-    if (bossDisponible) {
-      return ennemiRepository.findByZoneIdAndBossTrue(zone.getId())
-          .orElseThrow(() -> new RessourceIntrouvableException("Boss introuvable dans cette zone"));
+    int valeurBase = valeurAleatoireEntre(capacite.getValeurMin(), capacite.getValeurMax());
+
+    return switch (capacite.getTypeCapacite()) {
+      case ATTAQUE -> {
+        int degats = (int) Math.round(
+            (valeurBase + bonusPuissance(puissance)) * boostMultiplicateur);
+        yield new TourResultat(TypeCapacite.ATTAQUE, degats, 0, true);
+      }
+      case SOIN -> new TourResultat(TypeCapacite.SOIN, valeurBase, 0, true);
+      case BOOST -> new TourResultat(TypeCapacite.BOOST, 0, 0, true);
+      case ESQUIVE -> new TourResultat(TypeCapacite.ESQUIVE, 0, 0, true);
+      case CONTRE -> {
+        int degats = valeurBase + bonusPuissance(puissance);
+        yield new TourResultat(TypeCapacite.CONTRE, degats, 0, true);
+      }
+      case RENVOI -> new TourResultat(TypeCapacite.RENVOI, 0, 0, true);
+      case PARALYSIE -> new TourResultat(TypeCapacite.PARALYSIE, 0, capacite.getDuree(), true);
+    };
+  }
+
+  private TourResultat calculerActionEnnemi(Combat combat) {
+    if (combat.getToursParalysieEnnemi() > 0) {
+      return new TourResultat(TypeCapacite.PARALYSIE, 0, 0, false);
     }
 
-    return choisirEnnemiAleatoire(zone);
-  }
-
-  /**
-   * Le boss devient disponible quand le joueur atteint le niveauRequis de la
-   * zone.
-   * C'est ce niveau qui détermine l'accès au boss (= déblocage de l'île
-   * suivante).
-   */
-  private boolean bossEstDisponible(ProgressionJoueur progression, Zone zone) {
-    return progression.getNiveau() >= zone.getNiveauRequis()
-        && ennemiRepository.findByZoneIdAndBossTrue(zone.getId()).isPresent();
-  }
-
-  /**
-   * Vérifie si le joueur a déjà vaincu le boss de cette zone dans sa progression
-   * actuelle.
-   */
-  private boolean bossDejaVaincu(ProgressionJoueur progression, Zone zone) {
-    return ennemiRepository.findByZoneIdAndBossTrue(zone.getId())
-        .map(boss -> combatRepository.existsByProgressionJoueurIdAndEnnemiIdAndStatut(
-            progression.getId(), boss.getId(), StatutCombat.VICTOIRE))
-        .orElse(false);
-  }
-
-  private Ennemi choisirEnnemiAleatoire(Zone zone) {
-    List<Ennemi> ennemis = ennemiRepository.findByZoneIdAndBossFalse(zone.getId());
-    if (ennemis.isEmpty()) {
-      throw new RessourceIntrouvableException("Aucun ennemi disponible dans cette zone");
+    List<Capacite> capacites = new ArrayList<>(combat.getEnnemi().getCapacites());
+    if (capacites.isEmpty()) {
+      int degats = combat.getEnnemi().getPuissance();
+      return new TourResultat(TypeCapacite.ATTAQUE, degats, 0, true);
     }
-    return ennemis.get(RANDOM.nextInt(ennemis.size()));
+
+    Capacite capaciteChoisie = capacites.get(RANDOM.nextInt(capacites.size()));
+    return calculerAction(capaciteChoisie, combat.getEnnemi().getPuissance(),
+        combat.getBoostMultiplicateurEnnemi());
   }
 
-  private void verifierAccesZone(ProgressionJoueur progression, Zone zone) {
-    if (progression.getNiveau() < zone.getNiveauRequis()) {
-      throw new IllegalStateException(
-          "Niveau insuffisant pour accéder à cette zone (requis : " + zone.getNiveauRequis() + ")");
+  private void appliquerActionSurEnnemi(TourResultat actionJoueur, TourResultat actionEnnemi,
+      Combat combat) {
+    if (!actionJoueur.reussi())
+      return;
+
+    boolean actionOffensive = estOffensif(actionJoueur.type());
+
+    if (actionOffensive && actionEnnemi.reussi() && actionEnnemi.type() == TypeCapacite.RENVOI) {
+      return;
+    }
+
+    if (actionOffensive && actionEnnemi.reussi()
+        && (actionEnnemi.type() == TypeCapacite.ESQUIVE
+            || actionEnnemi.type() == TypeCapacite.CONTRE)) {
+      return;
+    }
+
+    switch (actionJoueur.type()) {
+      case ATTAQUE -> combat.setVieEnnemiActuelle(
+          Math.max(0, combat.getVieEnnemiActuelle() - actionJoueur.valeur()));
+      case PARALYSIE -> combat.setToursParalysieEnnemi(
+          Math.max(combat.getToursParalysieEnnemi(), actionJoueur.duree()));
+      default -> {
+      }
     }
   }
 
-  // -------------------------------------------------------------------------
-  // Logique de combat
-  // -------------------------------------------------------------------------
+  private void appliquerActionSurJoueur(TourResultat actionEnnemi, TourResultat actionJoueur,
+      Combat combat, ProgressionJoueur progression) {
 
-  private void appliquerCapacite(Combat combat, ProgressionJoueur progression, Capacite capacite) {
-    switch (capacite.getTypeCapacite()) {
-      case ATTAQUE -> appliquerAttaque(combat, progression, capacite);
-      case SOIN -> appliquerSoin(progression, capacite);
-      default -> throw new IllegalArgumentException("Type de capacite non géré pour le moment");
+    if (actionJoueur.reussi() && actionJoueur.type() == TypeCapacite.SOIN) {
+      progression.setVieActuelle(
+          Math.min(progression.getVieMax(), progression.getVieActuelle() + actionJoueur.valeur()));
     }
-  }
 
-  private void appliquerAttaque(Combat combat, ProgressionJoueur progression, Capacite capacite) {
-    int degats = calculerDegats(progression, capacite);
-    combat.setVieEnnemiActuelle(Math.max(0, combat.getVieEnnemiActuelle() - degats));
-  }
+    if (actionJoueur.reussi() && actionJoueur.type() == TypeCapacite.RENVOI
+        && actionEnnemi.reussi() && actionEnnemi.type() == TypeCapacite.ATTAQUE) {
+      combat.setVieEnnemiActuelle(
+          Math.max(0, combat.getVieEnnemiActuelle() - actionEnnemi.valeur()));
+      return;
+    }
 
-  private void appliquerSoin(ProgressionJoueur progression, Capacite capacite) {
-    int soin = valeurAleatoireEntre(capacite.getValeurMin(), capacite.getValeurMax());
-    progression.setVieActuelle(Math.min(progression.getVieMax(), progression.getVieActuelle() + soin));
+    if (actionEnnemi.reussi() && actionEnnemi.type() == TypeCapacite.RENVOI
+        && actionJoueur.reussi() && actionJoueur.type() == TypeCapacite.ATTAQUE) {
+      progression.setVieActuelle(
+          Math.max(0, progression.getVieActuelle() - actionJoueur.valeur()));
+      return;
+    }
+
+    if (!actionEnnemi.reussi())
+      return;
+
+    boolean actionEnnemieOffensive = estOffensif(actionEnnemi.type());
+
+    if (actionEnnemieOffensive && actionJoueur.reussi()
+        && (actionJoueur.type() == TypeCapacite.ESQUIVE
+            || actionJoueur.type() == TypeCapacite.CONTRE)) {
+      if (actionJoueur.type() == TypeCapacite.CONTRE) {
+        combat.setVieEnnemiActuelle(
+            Math.max(0, combat.getVieEnnemiActuelle() - actionJoueur.valeur()));
+      }
+      return;
+    }
+
+    switch (actionEnnemi.type()) {
+      case ATTAQUE -> progression.setVieActuelle(
+          Math.max(0, progression.getVieActuelle() - actionEnnemi.valeur()));
+      case SOIN -> combat.setVieEnnemiActuelle(
+          Math.min(combat.getEnnemi().getVieMax(),
+              combat.getVieEnnemiActuelle() + actionEnnemi.valeur()));
+      case PARALYSIE -> combat.setToursParalysieJoueur(
+          Math.max(combat.getToursParalysieJoueur(), actionEnnemi.duree()));
+      default -> {
+      }
+    }
   }
 
   private RecompenseCombatResponse verifierFinCombat(Combat combat, ProgressionJoueur progression) {
-    if (ennemiEstVaincu(combat)) {
+    if (combat.getVieEnnemiActuelle() <= 0) {
       return appliquerVictoire(combat, progression);
     }
-    appliquerTourEnnemi(combat, progression);
-    if (joueurEstVaincu(progression)) {
+    if (progression.getVieActuelle() <= 0) {
       combat.setStatut(StatutCombat.DEFAITE);
     }
     return null;
@@ -213,22 +275,84 @@ public class CombatService {
     return new RecompenseCombatResponse(exp, prime);
   }
 
-  private void appliquerTourEnnemi(Combat combat, ProgressionJoueur progression) {
-    int nouvelleVie = progression.getVieActuelle() - combat.getEnnemi().getPuissance();
-    progression.setVieActuelle(Math.max(0, nouvelleVie));
+  private void verifierAucunCombatEnCours(ProgressionJoueur progression) {
+    combatRepository.findByProgressionJoueurIdAndStatut(progression.getId(), StatutCombat.EN_COURS)
+        .ifPresent(c -> {
+          throw new IllegalStateException("Un combat est déjà en cours");
+        });
   }
 
-  private boolean ennemiEstVaincu(Combat combat) {
-    return combat.getVieEnnemiActuelle() <= 0;
+  private void verifierEnduranceSuffisante(ProgressionJoueur progression) {
+    if (progression.getEnduranceActuelle() <= 0) {
+      throw new IllegalStateException("Endurance insuffisante pour lancer un combat");
+    }
   }
 
-  private boolean joueurEstVaincu(ProgressionJoueur progression) {
-    return progression.getVieActuelle() <= 0;
+  private void verifierCoutEndurance(ProgressionJoueur progression, Capacite capacite) {
+    if (progression.getEnduranceActuelle() < capacite.getCoutEndurance()) {
+      throw new IllegalStateException(
+          "Endurance insuffisante pour utiliser cette capacité (coût : "
+              + capacite.getCoutEndurance() + ")");
+    }
   }
 
-  // -------------------------------------------------------------------------
-  // Formules
-  // -------------------------------------------------------------------------
+  private void verifierNonParalyse(Combat combat) {
+    if (combat.getToursParalysieJoueur() > 0) {
+      throw new IllegalStateException(
+          "Vous êtes paralysé et ne pouvez pas agir ce tour ("
+              + combat.getToursParalysieJoueur() + " tour(s) restant(s))");
+    }
+  }
+
+  private void verifierAccesZone(ProgressionJoueur progression, Zone zone) {
+    if (progression.getNiveau() < zone.getNiveauRequis()) {
+      throw new IllegalStateException(
+          "Niveau insuffisant pour accéder à cette zone (requis : " + zone.getNiveauRequis() + ")");
+    }
+  }
+
+  private Ennemi choisirEnnemi(ProgressionJoueur progression, Zone zone) {
+    if (bossDejaVaincu(progression, zone)) {
+      throw new IllegalStateException(
+          "Le boss de cette zone a déjà été vaincu. Passez à la zone suivante.");
+    }
+    if (bossEstDisponible(progression, zone)) {
+      return ennemiRepository.findByZoneIdAndBossTrue(zone.getId())
+          .orElseThrow(() -> new RessourceIntrouvableException("Boss introuvable dans cette zone"));
+    }
+    return choisirEnnemiAleatoire(zone);
+  }
+
+  private boolean bossEstDisponible(ProgressionJoueur progression, Zone zone) {
+    return progression.getNiveau() >= zone.getNiveauRequis()
+        && ennemiRepository.findByZoneIdAndBossTrue(zone.getId()).isPresent();
+  }
+
+  private boolean bossDejaVaincu(ProgressionJoueur progression, Zone zone) {
+    return ennemiRepository.findByZoneIdAndBossTrue(zone.getId())
+        .map(boss -> combatRepository.existsByProgressionJoueurIdAndEnnemiIdAndStatut(
+            progression.getId(), boss.getId(), StatutCombat.VICTOIRE))
+        .orElse(false);
+  }
+
+  private Ennemi choisirEnnemiAleatoire(Zone zone) {
+    List<Ennemi> liste = ennemiRepository.findByZoneIdAndBossFalse(zone.getId());
+    if (liste.isEmpty()) {
+      throw new RessourceIntrouvableException("Aucun ennemi disponible dans cette zone");
+    }
+    return liste.get(RANDOM.nextInt(liste.size()));
+  }
+
+  private boolean capaciteAtteintSaCible(Capacite capacite) {
+    int precision = capacite.getPrecision() != null ? capacite.getPrecision() : 100;
+    if (precision >= 100)
+      return true;
+    return (RANDOM.nextInt(100) + 1) <= precision;
+  }
+
+  private boolean estOffensif(TypeCapacite type) {
+    return type == TypeCapacite.ATTAQUE || type == TypeCapacite.PARALYSIE;
+  }
 
   private int calculerRecompense(int niveauZone, double minFacteur, double maxFacteur, boolean boss) {
     double mult = boss ? MULTIPLICATEUR_BOSS : 1.0;
@@ -243,13 +367,9 @@ public class CombatService {
 
   private void appliquerExperience(ProgressionJoueur progression, int experienceGagnee) {
     progression.setExperience(progression.getExperience() + experienceGagnee);
-    while (peutMonterDeNiveau(progression)) {
+    while (progression.getExperience() >= experienceRequise(progression.getNiveau())) {
       monterDeNiveau(progression);
     }
-  }
-
-  private boolean peutMonterDeNiveau(ProgressionJoueur progression) {
-    return progression.getExperience() >= experienceRequise(progression.getNiveau());
   }
 
   private void monterDeNiveau(ProgressionJoueur progression) {
@@ -261,13 +381,9 @@ public class CombatService {
     progression.setEnduranceActuelle(progression.getEnduranceMax());
   }
 
-  // -------------------------------------------------------------------------
-  // Helpers
-  // -------------------------------------------------------------------------
-
-  private int calculerDegats(ProgressionJoueur progression, Capacite capacite) {
-    return valeurAleatoireEntre(capacite.getValeurMin(), capacite.getValeurMax())
-        + bonusPuissance(progression.getPuissance());
+  private void consommerEndurance(ProgressionJoueur progression, Capacite capacite) {
+    progression.setEnduranceActuelle(
+        progression.getEnduranceActuelle() - capacite.getCoutEndurance());
   }
 
   private int bonusPuissance(int puissance) {
@@ -278,13 +394,6 @@ public class CombatService {
     if (min > max)
       throw new IllegalArgumentException("min ne peut pas être supérieur à max");
     return RANDOM.nextInt(min, max + 1);
-  }
-
-  private void verifierAucunCombatEnCours(ProgressionJoueur progression) {
-    combatRepository.findByProgressionJoueurIdAndStatut(progression.getId(), StatutCombat.EN_COURS)
-        .ifPresent(c -> {
-          throw new IllegalStateException("Un combat est déjà en cours");
-        });
   }
 
   private Combat recupererCombatEnCoursConnecte() {
@@ -326,6 +435,7 @@ public class CombatService {
         combat.getEnnemi().getNom(),
         combat.getVieEnnemiActuelle(),
         combat.getProgressionJoueur().getVieActuelle(),
+        combat.getProgressionJoueur().getEnduranceActuelle(),
         combat.getStatut(),
         recompense);
   }
