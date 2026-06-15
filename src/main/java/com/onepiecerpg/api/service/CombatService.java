@@ -190,13 +190,12 @@ public class CombatService {
       return;
     }
 
-    switch (actionJoueur.type()) {
-      case ATTAQUE -> combat.setVieEnnemiActuelle(
+    if (actionJoueur.type() == TypeCapacite.ATTAQUE) {
+      combat.setVieEnnemiActuelle(
           Math.max(0, combat.getVieEnnemiActuelle() - actionJoueur.valeur()));
-      case PARALYSIE -> combat.setToursParalysieEnnemi(
+    } else if (actionJoueur.type() == TypeCapacite.PARALYSIE) {
+      combat.setToursParalysieEnnemi(
           Math.max(combat.getToursParalysieEnnemi(), actionJoueur.duree()));
-      default -> {
-      }
     }
   }
 
@@ -237,16 +236,16 @@ public class CombatService {
       return;
     }
 
-    switch (actionEnnemi.type()) {
-      case ATTAQUE -> progression.setVieActuelle(
+    if (actionEnnemi.type() == TypeCapacite.ATTAQUE) {
+      progression.setVieActuelle(
           Math.max(0, progression.getVieActuelle() - actionEnnemi.valeur()));
-      case SOIN -> combat.setVieEnnemiActuelle(
+    } else if (actionEnnemi.type() == TypeCapacite.SOIN) {
+      combat.setVieEnnemiActuelle(
           Math.min(combat.getEnnemi().getVieMax(),
               combat.getVieEnnemiActuelle() + actionEnnemi.valeur()));
-      case PARALYSIE -> combat.setToursParalysieJoueur(
+    } else if (actionEnnemi.type() == TypeCapacite.PARALYSIE) {
+      combat.setToursParalysieJoueur(
           Math.max(combat.getToursParalysieJoueur(), actionEnnemi.duree()));
-      default -> {
-      }
     }
   }
 
