@@ -27,4 +27,10 @@ public class ProgressionJoueurController {
     ProgressionJoueurResponse response = progressionJoueurService.choisirFaction(factionId);
     return ResponseEntity.ok(response);
   }
+
+  @PostMapping("/repos")
+  public ResponseEntity<ProgressionJoueurResponse> seReposer() {
+    ProgressionJoueurResponse response = progressionJoueurService.seReposer();
+    return ResponseEntity.ok(response);
+  }
 }

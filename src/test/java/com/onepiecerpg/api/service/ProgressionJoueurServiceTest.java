@@ -1,6 +1,9 @@
 package com.onepiecerpg.api.service;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 import java.util.Optional;
@@ -167,6 +170,20 @@ class ProgressionJoueurServiceTest {
         .hasMessage("Faction non trouvée");
 
     verify(progressionJoueurRepository, never()).save(any());
+  }
+
+  @Test
+  void shouldRestoreEnduranceOnRest() {
+    ProgressionJoueur progression = progression();
+    progression.setEnduranceActuelle(2); // endurance entamée
+
+    mockProgressionConnectee(progression);
+    when(progressionJoueurRepository.save(progression)).thenReturn(progression);
+
+    ProgressionJoueurResponse response = progressionJoueurService.seReposer();
+
+    assertThat(response.enduranceActuelle()).isEqualTo(progression.getEnduranceMax());
+    assertThat(progression.getEnduranceActuelle()).isEqualTo(progression.getEnduranceMax());
   }
 
   private void mockProgressionConnectee(ProgressionJoueur progression) {

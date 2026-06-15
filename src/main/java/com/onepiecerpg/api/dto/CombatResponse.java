@@ -8,6 +8,8 @@ public record CombatResponse(
     int vieEnnemiActuelle,
     int vieJoueurActuelle,
     int enduranceActuelle,
+    boolean bossVaincu,
+    boolean factionsDebloquees,
     StatutCombat statut,
     RecompenseCombatResponse recompense) {
 }

@@ -83,7 +83,8 @@ class CombatControllerTest {
   @Test
   @DisplayName("Doit utiliser une capacité")
   void shouldUseCapacite() throws Exception {
-    CombatResponse response = new CombatResponse(1L, "Bandit", 12, 8, 7, StatutCombat.EN_COURS, null);
+    CombatResponse response = new CombatResponse(
+        1L, "Bandit", 12, 8, 7, false, false, StatutCombat.EN_COURS, null);
 
     when(combatService.utiliserCapacite(1L)).thenReturn(response);
 
@@ -99,7 +100,8 @@ class CombatControllerTest {
   @DisplayName("Doit retourner une récompense en cas de victoire")
   void shouldReturnRewardWhenVictory() throws Exception {
     CombatResponse response = new CombatResponse(
-        1L, "Bandit", 0, 8, 7, StatutCombat.VICTOIRE, new RecompenseCombatResponse(10, 100L));
+        1L, "Bandit", 0, 8, 7, false, false, StatutCombat.VICTOIRE,
+        new RecompenseCombatResponse(10, 100L));
 
     when(combatService.utiliserCapacite(1L)).thenReturn(response);
 
@@ -108,6 +110,21 @@ class CombatControllerTest {
         .andExpect(jsonPath("$.statut").value("VICTOIRE"))
         .andExpect(jsonPath("$.recompense.experience").value(10))
         .andExpect(jsonPath("$.recompense.prime").value(100));
+  }
+
+  @Test
+  @DisplayName("Doit indiquer la victoire contre le boss Higuma et débloquer les factions")
+  void shouldUnlockFactionsWhenHigumaDefeated() throws Exception {
+    CombatResponse response = new CombatResponse(
+        1L, "Higuma", 0, 8, 7, true, true, StatutCombat.VICTOIRE,
+        new RecompenseCombatResponse(50, 500L));
+
+    when(combatService.utiliserCapacite(1L)).thenReturn(response);
+
+    mockMvc.perform(post("/api/combats/capacites/1"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.bossVaincu").value(true))
+        .andExpect(jsonPath("$.factionsDebloquees").value(true));
   }
 
   @Test
@@ -157,6 +174,6 @@ class CombatControllerTest {
   }
 
   private CombatResponse combatResponse(StatutCombat statut) {
-    return new CombatResponse(1L, "Bandit", 20, 10, 8, statut, null);
+    return new CombatResponse(1L, "Bandit", 20, 10, 8, false, false, statut, null);
   }
 }

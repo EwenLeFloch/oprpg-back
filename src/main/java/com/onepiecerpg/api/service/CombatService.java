@@ -37,6 +37,7 @@ public class CombatService {
   private static final double PRIME_MIN_FACTEUR = 50.0;
   private static final double PRIME_MAX_FACTEUR = 80.0;
   private static final double MULTIPLICATEUR_BOSS = 2.5;
+  private static final long ID_BOSS_HIGUMA = 1L;
 
   private static final double EXP_BASE = 30.0;
   private static final double EXP_EXPOSANT = 1.645;
@@ -429,12 +430,17 @@ public class CombatService {
   }
 
   private CombatResponse convertir(Combat combat, RecompenseCombatResponse recompense) {
+    boolean victoireBoss = combat.getStatut() == StatutCombat.VICTOIRE && combat.getEnnemi().isBoss();
+    boolean factionsDebloquees = victoireBoss && combat.getEnnemi().getId() == ID_BOSS_HIGUMA;
+
     return new CombatResponse(
         combat.getId(),
         combat.getEnnemi().getNom(),
         combat.getVieEnnemiActuelle(),
         combat.getProgressionJoueur().getVieActuelle(),
         combat.getProgressionJoueur().getEnduranceActuelle(),
+        victoireBoss,
+        factionsDebloquees,
         combat.getStatut(),
         recompense);
   }

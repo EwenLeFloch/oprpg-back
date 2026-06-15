@@ -86,6 +86,18 @@ class ProgressionJoueurControllerTest {
         .andExpect(jsonPath("$.message").value("La faction a déjà été choisie"));
   }
 
+  @Test
+  @DisplayName("Doit restaurer l'endurance après repos")
+  void shouldRest() throws Exception {
+    ProgressionJoueurResponse response = progressionResponse(null);
+
+    when(progressionJoueurService.seReposer()).thenReturn(response);
+
+    mockMvc.perform(post("/api/progression/repos"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.enduranceActuelle").value(10));
+  }
+
   private ProgressionJoueurResponse progressionResponse(String faction) {
     return new ProgressionJoueurResponse(
         1L, 1, 0, 10, 10, 1, 10, 10, 0, 0L,

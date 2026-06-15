@@ -78,6 +78,14 @@ public class ProgressionJoueurService {
     return convertirEnResponse(progressionJoueurRepository.save(progression));
   }
 
+  public ProgressionJoueurResponse seReposer() {
+    ProgressionJoueur progression = recupererProgressionConnectee();
+
+    progression.setEnduranceActuelle(progression.getEnduranceMax());
+
+    return convertirEnResponse(progressionJoueurRepository.save(progression));
+  }
+
   private ProgressionJoueur recupererProgressionConnectee() {
     String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
