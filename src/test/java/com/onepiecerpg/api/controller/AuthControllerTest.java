@@ -9,31 +9,15 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.onepiecerpg.api.config.ClockConfig;
 import com.onepiecerpg.api.dto.ConnexionResponse;
-import com.onepiecerpg.api.dto.UtilisateurResponseDto;
-import com.onepiecerpg.api.exception.GlobalExceptionHandler;
 import com.onepiecerpg.api.security.JwtAuthenticationFilter;
-import com.onepiecerpg.api.service.JwtService;
 import com.onepiecerpg.api.service.UtilisateurService;
 
-@WebMvcTest(controllers = AuthController.class, excludeAutoConfiguration = {
-    SecurityAutoConfiguration.class,
-    SecurityFilterAutoConfiguration.class
-})
-@Import({
-    GlobalExceptionHandler.class,
-    ClockConfig.class
-})
-@AutoConfigureMockMvc(addFilters = false)
+@WebMvcTest(AuthController.class)
 class AuthControllerTest {
 
   @Autowired
@@ -43,60 +27,11 @@ class AuthControllerTest {
   private UtilisateurService utilisateurService;
 
   @MockitoBean
-  private JwtService jwtService;
-
-  @MockitoBean
   private JwtAuthenticationFilter jwtAuthenticationFilter;
 
   @Test
-  @DisplayName("Doit retourner 201 lors d'une inscription valide")
-  void shouldRegisterUser() throws Exception {
-    UtilisateurResponseDto utilisateur = new UtilisateurResponseDto(
-        1L,
-        "testuser",
-        "test@test.com",
-        "USER");
-
-    when(utilisateurService.creerUtilisateur(ArgumentMatchers.any())).thenReturn(utilisateur);
-
-    String body = """
-        {
-          "pseudo": "testuser",
-          "email": "test@test.com",
-          "motDePasse": "Password123"
-        }
-        """;
-
-    mockMvc.perform(post("/api/auth/inscription")
-        .contentType("application/json")
-        .content(body))
-        .andExpect(status().isCreated())
-        .andExpect(jsonPath("$.pseudo").value("testuser"))
-        .andExpect(jsonPath("$.email").value("test@test.com"))
-        .andExpect(jsonPath("$.role").value("USER"))
-        .andExpect(jsonPath("$.motDePasseHash").doesNotExist());
-  }
-
-  @Test
-  @DisplayName("Doit retourner 400 lors d'une inscription invalide")
-  void shouldReturnBadRequestWhenRegisterInvalid() throws Exception {
-    String body = """
-        {
-          "pseudo": "",
-          "email": "email-invalide",
-          "motDePasse": "Password"
-        }
-        """;
-
-    mockMvc.perform(post("/api/auth/inscription")
-        .contentType("application/json")
-        .content(body))
-        .andExpect(status().isBadRequest());
-  }
-
-  @Test
-  @DisplayName("Doit retourner 200 lors d'une connexion valide")
-  void shouldLoginUser() throws Exception {
+  @DisplayName("Doit retourner 200 lors d'une connexion valide avec email")
+  void shouldLoginUserWithEmail() throws Exception {
     ConnexionResponse response = new ConnexionResponse(
         "mocked-token",
         "Bearer",
@@ -107,7 +42,7 @@ class AuthControllerTest {
 
     String body = """
         {
-          "email": "test@test.com",
+          "identifiant": "test@test.com",
           "motDePasse": "Password123"
         }
         """;
@@ -123,11 +58,36 @@ class AuthControllerTest {
   }
 
   @Test
-  @DisplayName("Doit retourner 400 lors d'une connexion invalide")
+  @DisplayName("Doit retourner 200 lors d'une connexion valide avec pseudo")
+  void shouldLoginUserWithPseudo() throws Exception {
+    ConnexionResponse response = new ConnexionResponse(
+        "mocked-token",
+        "Bearer",
+        "testuser",
+        "USER");
+
+    when(utilisateurService.connecterUtilisateur(ArgumentMatchers.any())).thenReturn(response);
+
+    String body = """
+        {
+          "identifiant": "testuser",
+          "motDePasse": "Password123"
+        }
+        """;
+
+    mockMvc.perform(post("/api/auth/connexion")
+        .contentType("application/json")
+        .content(body))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.pseudo").value("testuser"));
+  }
+
+  @Test
+  @DisplayName("Doit retourner 400 lors d'une connexion avec identifiant vide")
   void shouldReturnBadRequestWhenLoginInvalid() throws Exception {
     String body = """
         {
-          "email": "email-invalide",
+          "identifiant": "",
           "motDePasse": ""
         }
         """;

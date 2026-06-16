@@ -54,15 +54,16 @@ public class UtilisateurService {
   }
 
   public ConnexionResponse connecterUtilisateur(ConnexionRequest request) {
-    Utilisateur utilisateur = utilisateurRepository.findByEmail(request.getEmail())
-        .orElseThrow(() -> new IllegalArgumentException("Email ou mot de passe incorrect"));
+    Utilisateur utilisateur = utilisateurRepository.findByEmail(request.getIdentifiant())
+        .or(() -> utilisateurRepository.findByPseudo(request.getIdentifiant()))
+        .orElseThrow(() -> new IllegalArgumentException("Identifiant ou mot de passe incorrect"));
 
     boolean motDePasseValide = passwordEncoder.matches(
         request.getMotDePasse(),
         utilisateur.getMotDePasseHash());
 
     if (!motDePasseValide) {
-      throw new IllegalArgumentException("Email ou mot de passe incorrect");
+      throw new IllegalArgumentException("Identifiant ou mot de passe incorrect");
     }
 
     String token = jwtService.genererToken(utilisateur);

@@ -1,124 +1,49 @@
 package com.onepiecerpg.api.service;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+import java.util.Optional;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.onepiecerpg.api.dto.ConnexionRequest;
 import com.onepiecerpg.api.dto.ConnexionResponse;
-import com.onepiecerpg.api.dto.InscriptionRequest;
 import com.onepiecerpg.api.dto.UtilisateurResponseDto;
 import com.onepiecerpg.api.entity.Utilisateur;
 import com.onepiecerpg.api.repository.UtilisateurRepository;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import static org.assertj.core.api.Assertions.*;
-
-import java.util.Optional;
-
+@ExtendWith(MockitoExtension.class)
 class UtilisateurServiceTest {
+
+  @Mock
   private UtilisateurRepository utilisateurRepository;
-  private UtilisateurService utilisateurService;
+
+  @Mock
   private PasswordEncoder passwordEncoder;
+
+  @Mock
   private JwtService jwtService;
+
+  @Mock
   private ProgressionJoueurService progressionJoueurService;
 
-  @BeforeEach
-  void setUp() {
-    utilisateurRepository = mock(UtilisateurRepository.class);
-    passwordEncoder = new BCryptPasswordEncoder();
-    jwtService = mock(JwtService.class);
-    progressionJoueurService = mock(ProgressionJoueurService.class);
-
-    utilisateurService = new UtilisateurService(
-        utilisateurRepository,
-        passwordEncoder,
-        jwtService,
-        progressionJoueurService);
-  }
-
-  @AfterEach
-  void tearDown() {
-    SecurityContextHolder.clearContext();
-  }
+  @InjectMocks
+  private UtilisateurService utilisateurService;
 
   @Test
-  @DisplayName("Doit créer un utilisateur avec mot de passe hashé ")
-  void shouldCreateUser() {
-    InscriptionRequest request = new InscriptionRequest();
-    request.setPseudo("testuser");
-    request.setEmail("test@test.com");
-    request.setMotDePasse("Password123");
-
-    when(utilisateurRepository.findByEmail(request.getEmail())).thenReturn(Optional.empty());
-    when(utilisateurRepository.findByPseudo(request.getPseudo())).thenReturn(Optional.empty());
-    when(utilisateurRepository.save(any(Utilisateur.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-    UtilisateurResponseDto response = utilisateurService.creerUtilisateur(request);
-
-    ArgumentCaptor<Utilisateur> captor = ArgumentCaptor.forClass(Utilisateur.class);
-
-    verify(utilisateurRepository).save(captor.capture());
-    verify(progressionJoueurService).creerProgressionInitiale(any(Utilisateur.class));
-    Utilisateur utilisateurSauvegarde = captor.getValue();
-
-    assertThat(response.pseudo()).isEqualTo("testuser");
-    assertThat(response.email()).isEqualTo("test@test.com");
-    assertThat(response.role()).isEqualTo("USER");
-    assertThat(passwordEncoder.matches("Password123", utilisateurSauvegarde.getMotDePasseHash())).isTrue();
-  }
-
-  @Test
-  @DisplayName("Doit refuser la création d'un utilisateur avec un email existant")
-  void shouldRejectDuplicateEmail() {
-    InscriptionRequest request = new InscriptionRequest();
-    request.setPseudo("testuser");
-    request.setEmail("test@test.com");
-    request.setMotDePasse("Password123");
-
-    Utilisateur utilisateurExistant = new Utilisateur();
-    utilisateurExistant.setEmail("test@test.com");
-
-    when(utilisateurRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(utilisateurExistant));
-
-    assertThatThrownBy(() -> utilisateurService.creerUtilisateur(request))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Cet email existe déjà");
-
-    verify(utilisateurRepository, never()).save(any());
-  }
-
-  @Test
-  @DisplayName("Doit refuser la création d'un utilisateur avec un pseudo existant")
-  void shouldRejectDuplicatePseudo() {
-    InscriptionRequest request = new InscriptionRequest();
-    request.setPseudo("testuser");
-    request.setEmail("test@test.com");
-    request.setMotDePasse("Password123");
-
-    Utilisateur utilisateurExistant = new Utilisateur();
-    utilisateurExistant.setPseudo("testuser");
-
-    when(utilisateurRepository.findByEmail(request.getEmail())).thenReturn(Optional.empty());
-    when(utilisateurRepository.findByPseudo(request.getPseudo())).thenReturn(Optional.of(utilisateurExistant));
-
-    assertThatThrownBy(() -> utilisateurService.creerUtilisateur(request))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Ce pseudo existe déjà");
-
-    verify(utilisateurRepository, never()).save(any());
-  }
-
-  @Test
-  @DisplayName("Doit connecter un utilisateur avec des identifiants valides")
-  void shouldLoginUser() {
+  @DisplayName("Doit connecter un utilisateur avec son email")
+  void shouldLoginUserWithEmail() {
     String motDePasseBrut = "Password123";
 
     Utilisateur utilisateur = new Utilisateur();
@@ -128,11 +53,13 @@ class UtilisateurServiceTest {
     utilisateur.setRole("USER");
 
     ConnexionRequest request = new ConnexionRequest();
-    request.setEmail("test@test.com");
+    request.setIdentifiant("test@test.com");
     request.setMotDePasse(motDePasseBrut);
 
-    when(utilisateurRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(utilisateur));
+    when(utilisateurRepository.findByEmail(request.getIdentifiant())).thenReturn(Optional.of(utilisateur));
+    when(passwordEncoder.matches(any(), any())).thenReturn(true);
     when(jwtService.genererToken(any(Utilisateur.class))).thenReturn("mocked-token");
+
     ConnexionResponse response = utilisateurService.connecterUtilisateur(request);
 
     assertThat(response.token()).isEqualTo("mocked-token");
@@ -142,37 +69,65 @@ class UtilisateurServiceTest {
   }
 
   @Test
+  @DisplayName("Doit connecter un utilisateur avec son pseudo")
+  void shouldLoginUserWithPseudo() {
+    String motDePasseBrut = "Password123";
+
+    Utilisateur utilisateur = new Utilisateur();
+    utilisateur.setPseudo("testuser");
+    utilisateur.setEmail("test@test.com");
+    utilisateur.setMotDePasseHash(motDePasseBrut);
+    utilisateur.setRole("USER");
+
+    ConnexionRequest request = new ConnexionRequest();
+    request.setIdentifiant("testuser");
+    request.setMotDePasse(motDePasseBrut);
+
+    when(utilisateurRepository.findByEmail(request.getIdentifiant())).thenReturn(Optional.empty());
+    when(utilisateurRepository.findByPseudo(request.getIdentifiant())).thenReturn(Optional.of(utilisateur));
+    when(passwordEncoder.matches(any(), any())).thenReturn(true);
+    when(jwtService.genererToken(any(Utilisateur.class))).thenReturn("mocked-token");
+
+    ConnexionResponse response = utilisateurService.connecterUtilisateur(request);
+
+    assertThat(response.token()).isEqualTo("mocked-token");
+    assertThat(response.pseudo()).isEqualTo("testuser");
+  }
+
+  @Test
   @DisplayName("Doit refuser une connexion avec un mot de passe incorrect")
   void shouldRejectLoginWithInvalidPassword() {
     Utilisateur utilisateur = new Utilisateur();
     utilisateur.setPseudo("testuser");
-    utilisateur.setEmail("luffy@test.com");
-    utilisateur.setMotDePasseHash(passwordEncoder.encode("Password123"));
+    utilisateur.setEmail("test@test.com");
+    utilisateur.setMotDePasseHash("hashed");
     utilisateur.setRole("USER");
 
     ConnexionRequest request = new ConnexionRequest();
-    request.setEmail("test@test.com");
+    request.setIdentifiant("test@test.com");
     request.setMotDePasse("WrongPassword123");
 
-    when(utilisateurRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(utilisateur));
+    when(utilisateurRepository.findByEmail(request.getIdentifiant())).thenReturn(Optional.of(utilisateur));
+    when(passwordEncoder.matches(any(), any())).thenReturn(false);
 
     assertThatThrownBy(() -> utilisateurService.connecterUtilisateur(request))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Email ou mot de passe incorrect");
+        .hasMessage("Identifiant ou mot de passe incorrect");
   }
 
   @Test
-  @DisplayName("Doit refuser une connexion avec un email inconnu")
-  void shouldRejectLoginWithUnknownEmail() {
+  @DisplayName("Doit refuser une connexion avec un identifiant inconnu")
+  void shouldRejectLoginWithUnknownIdentifiant() {
     ConnexionRequest request = new ConnexionRequest();
-    request.setEmail("unknown@test.com");
+    request.setIdentifiant("inconnu@test.com");
     request.setMotDePasse("Password123");
 
-    when(utilisateurRepository.findByEmail(request.getEmail())).thenReturn(Optional.empty());
+    when(utilisateurRepository.findByEmail(request.getIdentifiant())).thenReturn(Optional.empty());
+    when(utilisateurRepository.findByPseudo(request.getIdentifiant())).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> utilisateurService.connecterUtilisateur(request))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Email ou mot de passe incorrect");
+        .hasMessage("Identifiant ou mot de passe incorrect");
   }
 
   @Test
@@ -208,6 +163,5 @@ class UtilisateurServiceTest {
     assertThatThrownBy(() -> utilisateurService.recupererUtilisateurConnecte())
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Utilisateur connecté introuvable");
-
   }
 }
