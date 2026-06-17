@@ -213,9 +213,11 @@ class ProgressionJoueurServiceTest {
     Ile ile = new Ile();
     ile.setId(1L);
     ile.setNom("Dawn Island");
-    ile.setImagePath("/images/dawn-island.png");
+    ile.setNomImage("dawn-island");
     ile.setDescription("Île de départ");
     ile.setNiveauRequis(1);
+    ile.setPositionX(1500);
+    ile.setPositionY(100);
     return ile;
   }
 

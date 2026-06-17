@@ -49,7 +49,7 @@ class ZoneRepositoryTest {
   private Ile ile() {
     Ile ile = new Ile();
     ile.setNom("Dawn Island");
-    ile.setImagePath("/images/dawn-island.png");
+    ile.setNomImage("dawn-island");
     ile.setDescription("Île de départ");
     ile.setNiveauRequis(1);
     return ile;

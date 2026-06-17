@@ -5,15 +5,20 @@ import com.onepiecerpg.api.entity.Ile;
 public record IleResponse(
     Long id,
     String nom,
-    String imagePath,
+    String nomImage,
     String description,
-    int niveauRequis) {
+    int niveauRequis,
+    int positionX,
+    int positionY) {
+
   public static IleResponse from(Ile ile) {
     return new IleResponse(
         ile.getId(),
         ile.getNom(),
-        ile.getImagePath(),
+        ile.getNomImage(),
         ile.getDescription(),
-        ile.getNiveauRequis());
+        ile.getNiveauRequis(),
+        ile.getPositionX(),
+        ile.getPositionY());
   }
 }

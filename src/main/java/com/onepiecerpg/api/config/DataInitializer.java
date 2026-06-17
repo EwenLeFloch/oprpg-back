@@ -165,9 +165,11 @@ public class DataInitializer implements CommandLineRunner {
 
     Ile ile = new Ile();
     ile.setNom("Dawn Island");
-    ile.setImagePath("/images/iles/dawn-island.png");
+    ile.setNomImage("dawn-island");
     ile.setDescription("Île de départ située dans East Blue.");
     ile.setNiveauRequis(1);
+    ile.setPositionX(1500);
+    ile.setPositionY(100);
 
     return ileRepository.save(ile);
   }

@@ -20,9 +20,11 @@ class IleRepositoryTest {
   void shouldFindByNom() {
     Ile ile = new Ile();
     ile.setNom("Dawn Island");
-    ile.setImagePath("/images/dawn-island.png");
+    ile.setNom("dawn-island");
     ile.setDescription("Île de départ");
     ile.setNiveauRequis(1);
+    ile.setPositionX(1500);
+    ile.setPositionY(100);
 
     ileRepository.save(ile);
 

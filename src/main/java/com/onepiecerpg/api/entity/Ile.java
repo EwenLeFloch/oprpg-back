@@ -20,8 +20,8 @@ public class Ile {
   @Column(nullable = false, unique = true)
   private String nom;
 
-  @Column(nullable = false, unique = true)
-  private String imagePath;
+  @Column(name = "nom_image", nullable = false, unique = true)
+  private String nomImage;
 
   @Column()
   private String description;
@@ -30,4 +30,10 @@ public class Ile {
   @Min(1)
   @Column(nullable = false)
   private int niveauRequis = 1;
+
+  @Column(name = "position_x", nullable = false)
+  private int positionX;
+
+  @Column(name = "position_y", nullable = false)
+  private int positionY;
 }

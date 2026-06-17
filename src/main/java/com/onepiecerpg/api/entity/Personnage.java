@@ -24,6 +24,9 @@ public class Personnage {
 
   private String description;
 
+  @Column(nullable = false, unique = true)
+  private String nomImage;
+
   @Builder.Default
   @Column(nullable = false)
   private boolean jouable = true;
