@@ -33,4 +33,9 @@ public class ProgressionJoueurController {
     ProgressionJoueurResponse response = progressionJoueurService.seReposer();
     return ResponseEntity.ok(response);
   }
+
+  @PostMapping("/boire-lait")
+  public ResponseEntity<ProgressionJoueurResponse> boireDuLait() {
+    return ResponseEntity.ok(progressionJoueurService.boireDuLait());
+  }
 }

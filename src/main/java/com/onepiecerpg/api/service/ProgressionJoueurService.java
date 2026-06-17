@@ -86,6 +86,13 @@ public class ProgressionJoueurService {
     return convertirEnResponse(progressionJoueurRepository.save(progression));
   }
 
+  public ProgressionJoueurResponse boireDuLait() {
+    ProgressionJoueur progression = recupererProgressionConnectee();
+    progression.setVieActuelle(progression.getVieMax());
+    progressionJoueurRepository.save(progression);
+    return convertirEnResponse(progression);
+  }
+
   private ProgressionJoueur recupererProgressionConnectee() {
     String email = SecurityContextHolder.getContext().getAuthentication().getName();
 

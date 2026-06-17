@@ -186,6 +186,19 @@ class ProgressionJoueurServiceTest {
     assertThat(progression.getEnduranceActuelle()).isEqualTo(progression.getEnduranceMax());
   }
 
+  @Test
+  void shouldRestoreFullHealthWithMilk() {
+    ProgressionJoueur progression = progression();
+    progression.setVieActuelle(1);
+
+    mockProgressionConnectee(progression);
+    when(progressionJoueurRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+    ProgressionJoueurResponse response = progressionJoueurService.boireDuLait();
+
+    assertThat(response.vieActuelle()).isEqualTo(progression.getVieMax());
+  }
+
   private void mockProgressionConnectee(ProgressionJoueur progression) {
     Utilisateur utilisateur = utilisateur();
 
