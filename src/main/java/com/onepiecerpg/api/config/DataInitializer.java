@@ -168,8 +168,8 @@ public class DataInitializer implements CommandLineRunner {
     ile.setNomImage("dawn-island");
     ile.setDescription("Île de départ située dans East Blue.");
     ile.setNiveauRequis(1);
-    ile.setPositionX(1500);
-    ile.setPositionY(100);
+    ile.setPositionX(1450);
+    ile.setPositionY(800);
 
     return ileRepository.save(ile);
   }
@@ -240,6 +240,7 @@ public class DataInitializer implements CommandLineRunner {
 
     Personnage personnage = new Personnage();
     personnage.setNom("Luffy");
+    personnage.setNomImage("luffy");
     personnage.setDescription("Personnage de départ du joueur.");
     personnage.setJouable(true);
     personnage.setCapacites(capacites);
