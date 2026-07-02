@@ -1,6 +1,8 @@
 package com.onepiecerpg.api.entity;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -57,4 +59,11 @@ public class Combat {
   @Builder.Default
   @Column(nullable = false)
   private int toursParalysieEnnemi = 0;
+
+  @Builder.Default
+  @ElementCollection
+  @CollectionTable(name = "combat_historique", joinColumns = @JoinColumn(name = "combat_id"))
+  @OrderColumn(name = "position")
+  @Column(name = "message", length = 255)
+  private List<String> historique = new ArrayList<>();
 }

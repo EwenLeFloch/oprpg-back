@@ -35,6 +35,13 @@ public class Ennemi {
   @Column(nullable = false)
   private boolean boss = false;
 
+  @Builder.Default
+  @Min(1)
+  @Column(nullable = false)
+  private int niveauRequis = 1;
+
+  private String nomImage;
+
   @ManyToOne(optional = false)
   @JoinColumn(name = "zone_id", nullable = false)
   private Zone zone;

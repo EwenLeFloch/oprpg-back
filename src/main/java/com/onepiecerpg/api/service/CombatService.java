@@ -13,6 +13,7 @@ import com.onepiecerpg.api.dto.TourResultat;
 import com.onepiecerpg.api.entity.Capacite;
 import com.onepiecerpg.api.entity.Combat;
 import com.onepiecerpg.api.entity.Ennemi;
+import com.onepiecerpg.api.entity.EtatCombat;
 import com.onepiecerpg.api.entity.ProgressionJoueur;
 import com.onepiecerpg.api.entity.StatutCombat;
 import com.onepiecerpg.api.entity.TypeCapacite;
@@ -39,8 +40,6 @@ public class CombatService {
   private static final double MULTIPLICATEUR_BOSS = 2.5;
   private static final long ID_BOSS_HIGUMA = 1L;
 
-  private static final double EXP_BASE = 30.0;
-  private static final double EXP_EXPOSANT = 1.645;
   private static final double BOOST_MULTIPLICATEUR = 1.3;
 
   private static final SecureRandom RANDOM = new SecureRandom();
@@ -78,6 +77,7 @@ public class CombatService {
     combat.setProgressionJoueur(progression);
     combat.setEnnemi(ennemi);
     combat.setVieEnnemiActuelle(ennemi.getVieMax());
+    combat.getHistorique().add("Combat engagé contre " + ennemi.getNom());
 
     return convertir(combatRepository.save(combat));
   }
@@ -94,9 +94,14 @@ public class CombatService {
     verifierCoutEndurance(progression, capaciteJoueur);
     verifierNonParalyse(combat);
 
+    String nomJoueur = progression.getPersonnage().getNom();
+    String nomEnnemi = combat.getEnnemi().getNom();
+
+    Capacite capaciteEnnemiChoisie = choisirCapaciteEnnemi(combat);
+
     TourResultat actionJoueur = calculerAction(
         capaciteJoueur, progression.getPuissance(), combat.getBoostMultiplicateurJoueur());
-    TourResultat actionEnnemi = calculerActionEnnemi(combat);
+    TourResultat actionEnnemi = calculerActionEnnemi(combat, capaciteEnnemiChoisie);
 
     consommerEndurance(progression, capaciteJoueur);
 
@@ -109,8 +114,15 @@ public class CombatService {
           combat.getBoostMultiplicateurEnnemi() * BOOST_MULTIPLICATEUR);
     }
 
+    int vieEnnemiAvant = combat.getVieEnnemiActuelle();
+    int vieJoueurAvant = progression.getVieActuelle();
+
     appliquerActionSurEnnemi(actionJoueur, actionEnnemi, combat);
+    int vieEnnemiApresActionJoueur = combat.getVieEnnemiActuelle();
+
     appliquerActionSurJoueur(actionEnnemi, actionJoueur, combat, progression);
+    int vieJoueurApres = progression.getVieActuelle();
+    int vieEnnemiFinal = combat.getVieEnnemiActuelle();
 
     if (combat.getToursParalysieJoueur() > 0) {
       combat.setToursParalysieJoueur(combat.getToursParalysieJoueur() - 1);
@@ -118,6 +130,11 @@ public class CombatService {
     if (combat.getToursParalysieEnnemi() > 0) {
       combat.setToursParalysieEnnemi(combat.getToursParalysieEnnemi() - 1);
     }
+
+    combat.getHistorique().addAll(construireHistorique(
+        nomJoueur, capaciteJoueur, actionJoueur, vieEnnemiAvant, vieEnnemiApresActionJoueur,
+        nomEnnemi, capaciteEnnemiChoisie, actionEnnemi, vieJoueurAvant, vieJoueurApres,
+        vieEnnemiApresActionJoueur, vieEnnemiFinal));
 
     RecompenseCombatResponse recompense = verifierFinCombat(combat, progression);
 
@@ -158,18 +175,25 @@ public class CombatService {
     };
   }
 
-  private TourResultat calculerActionEnnemi(Combat combat) {
+  private Capacite choisirCapaciteEnnemi(Combat combat) {
+    if (combat.getToursParalysieEnnemi() > 0) {
+      return null;
+    }
+    List<Capacite> capacites = new ArrayList<>(combat.getEnnemi().getCapacites());
+    if (capacites.isEmpty()) {
+      return null;
+    }
+    return capacites.get(RANDOM.nextInt(capacites.size()));
+  }
+
+  private TourResultat calculerActionEnnemi(Combat combat, Capacite capaciteChoisie) {
     if (combat.getToursParalysieEnnemi() > 0) {
       return new TourResultat(TypeCapacite.PARALYSIE, 0, 0, false);
     }
-
-    List<Capacite> capacites = new ArrayList<>(combat.getEnnemi().getCapacites());
-    if (capacites.isEmpty()) {
+    if (capaciteChoisie == null) {
       int degats = combat.getEnnemi().getPuissance();
       return new TourResultat(TypeCapacite.ATTAQUE, degats, 0, true);
     }
-
-    Capacite capaciteChoisie = capacites.get(RANDOM.nextInt(capacites.size()));
     return calculerAction(capaciteChoisie, combat.getEnnemi().getPuissance(),
         combat.getBoostMultiplicateurEnnemi());
   }
@@ -250,6 +274,82 @@ public class CombatService {
     }
   }
 
+  private List<String> construireHistorique(
+      String nomJoueur, Capacite capaciteJoueur, TourResultat actionJoueur,
+      int vieEnnemiAvant, int vieEnnemiApresActionJoueur,
+      String nomEnnemi, Capacite capaciteEnnemiChoisie, TourResultat actionEnnemi,
+      int vieJoueurAvant, int vieJoueurApres, int vieEnnemiApresJoueurAction, int vieEnnemiFinal) {
+
+    List<String> lignes = new ArrayList<>();
+
+    lignes.add(nomJoueur + " utilise " + capaciteJoueur.getNom());
+    lignes.add(ligneEffetJoueur(nomJoueur, nomEnnemi, actionJoueur, vieEnnemiAvant, vieEnnemiApresActionJoueur));
+
+    if (capaciteEnnemiChoisie != null) {
+      lignes.add(nomEnnemi + " utilise " + capaciteEnnemiChoisie.getNom());
+    } else if (actionEnnemi.reussi()) {
+      lignes.add(nomEnnemi + " attaque");
+    } else {
+      lignes.add(nomEnnemi + " est paralysé et ne peut pas agir");
+    }
+
+    int degatsSupplementairesEnnemi = Math.max(0, vieEnnemiApresJoueurAction - vieEnnemiFinal);
+    lignes.add(ligneEffetEnnemi(nomJoueur, nomEnnemi, actionEnnemi, vieJoueurAvant, vieJoueurApres,
+        degatsSupplementairesEnnemi));
+
+    return lignes;
+  }
+
+  private String ligneEffetJoueur(String nomJoueur, String nomEnnemi, TourResultat action,
+      int vieEnnemiAvant, int vieEnnemiApres) {
+    if (!action.reussi()) {
+      return action.type() == TypeCapacite.PARALYSIE
+          ? nomEnnemi + " esquive la paralysie"
+          : nomJoueur + " rate son action";
+    }
+    int degats = vieEnnemiAvant - vieEnnemiApres;
+    return switch (action.type()) {
+      case ATTAQUE -> degats > 0
+          ? "Il inflige " + degats + " dégâts à " + nomEnnemi
+          : nomEnnemi + " évite l'attaque";
+      case SOIN -> nomJoueur + " récupère " + action.valeur() + " PV";
+      case BOOST -> nomJoueur + " augmente sa puissance";
+      case ESQUIVE -> nomJoueur + " esquivera la prochaine attaque";
+      case CONTRE -> nomJoueur + " se prépare à contre-attaquer";
+      case RENVOI -> nomJoueur + " se prépare à renvoyer la prochaine attaque";
+      case PARALYSIE -> nomEnnemi + " est paralysé pendant " + action.duree() + " tour(s)";
+    };
+  }
+
+  private String ligneEffetEnnemi(String nomJoueur, String nomEnnemi, TourResultat action,
+      int vieJoueurAvant, int vieJoueurApres, int degatsSupplementairesEnnemi) {
+    if (!action.reussi()) {
+      if (action.type() == TypeCapacite.PARALYSIE) {
+        return nomJoueur + " esquive la paralysie";
+      }
+      return degatsSupplementairesEnnemi > 0
+          ? nomJoueur + " contre-attaque et inflige " + degatsSupplementairesEnnemi + " dégâts à " + nomEnnemi
+          : nomEnnemi + " ne parvient pas à agir";
+    }
+    int degats = vieJoueurAvant - vieJoueurApres;
+    return switch (action.type()) {
+      case ATTAQUE -> {
+        if (degatsSupplementairesEnnemi > 0) {
+          yield nomJoueur + " contre-attaque et inflige " + degatsSupplementairesEnnemi + " dégâts à " + nomEnnemi;
+        }
+        yield degats > 0
+            ? "Il inflige " + degats + " dégâts à " + nomJoueur
+            : nomJoueur + " évite l'attaque";
+      }
+      case SOIN -> nomEnnemi + " récupère " + action.valeur() + " PV";
+      case BOOST -> nomEnnemi + " augmente sa puissance";
+      case ESQUIVE -> nomEnnemi + " esquivera la prochaine attaque";
+      case CONTRE -> nomEnnemi + " se prépare à contre-attaquer";
+      case RENVOI -> nomEnnemi + " se prépare à renvoyer la prochaine attaque";
+      case PARALYSIE -> nomJoueur + " est paralysé pendant " + action.duree() + " tour(s)";
+    };
+  }
+
   private RecompenseCombatResponse verifierFinCombat(Combat combat, ProgressionJoueur progression) {
     if (combat.getVieEnnemiActuelle() <= 0) {
       return appliquerVictoire(combat, progression);
@@ -271,6 +371,9 @@ public class CombatService {
 
     appliquerExperience(progression, exp);
     progression.setPrime(progression.getPrime() + prime);
+
+    combat.getHistorique().add("Victoire contre " + combat.getEnnemi().getNom()
+        + " ! +" + exp + " XP, +" + prime + " Prime");
 
     return new RecompenseCombatResponse(exp, prime);
   }
@@ -324,8 +427,9 @@ public class CombatService {
   }
 
   private boolean bossEstDisponible(ProgressionJoueur progression, Zone zone) {
-    return progression.getNiveau() >= zone.getNiveauRequis()
-        && ennemiRepository.findByZoneIdAndBossTrue(zone.getId()).isPresent();
+    return ennemiRepository.findByZoneIdAndBossTrue(zone.getId())
+        .map(boss -> progression.getNiveau() >= boss.getNiveauRequis())
+        .orElse(false);
   }
 
   private boolean bossDejaVaincu(ProgressionJoueur progression, Zone zone) {
@@ -362,7 +466,7 @@ public class CombatService {
   }
 
   int experienceRequise(int niveau) {
-    return (int) Math.round(EXP_BASE * Math.pow(niveau, EXP_EXPOSANT));
+    return ExperienceCalculator.experienceRequise(niveau);
   }
 
   private void appliquerExperience(ProgressionJoueur progression, int experienceGagnee) {
@@ -433,15 +537,22 @@ public class CombatService {
     boolean victoireBoss = combat.getStatut() == StatutCombat.VICTOIRE && combat.getEnnemi().isBoss();
     boolean factionsDebloquees = victoireBoss && combat.getEnnemi().getId() == ID_BOSS_HIGUMA;
 
+    EtatCombat etatJoueur = combat.getToursParalysieJoueur() > 0 ? EtatCombat.PARALYSE : EtatCombat.NORMAL;
+    EtatCombat etatEnnemi = combat.getToursParalysieEnnemi() > 0 ? EtatCombat.PARALYSE : EtatCombat.NORMAL;
+
     return new CombatResponse(
         combat.getId(),
+        combat.getEnnemi().getId(),
         combat.getEnnemi().getNom(),
         combat.getVieEnnemiActuelle(),
         combat.getProgressionJoueur().getVieActuelle(),
         combat.getProgressionJoueur().getEnduranceActuelle(),
+        etatJoueur,
+        etatEnnemi,
         victoireBoss,
         factionsDebloquees,
         combat.getStatut(),
+        List.copyOf(combat.getHistorique()),
         recompense);
   }
 }

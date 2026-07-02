@@ -108,6 +108,7 @@ public class ProgressionJoueurService {
         progression.getId(),
         progression.getNiveau(),
         progression.getExperience(),
+        ExperienceCalculator.experienceRequise(progression.getNiveau()),
         progression.getEnduranceMax(),
         progression.getEnduranceActuelle(),
         progression.getPuissance(),

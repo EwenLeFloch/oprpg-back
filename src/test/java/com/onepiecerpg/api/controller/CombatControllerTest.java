@@ -6,6 +6,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.onepiecerpg.api.config.ClockConfig;
 import com.onepiecerpg.api.dto.CombatResponse;
 import com.onepiecerpg.api.dto.RecompenseCombatResponse;
+import com.onepiecerpg.api.entity.EtatCombat;
 import com.onepiecerpg.api.entity.StatutCombat;
 import com.onepiecerpg.api.exception.GlobalExceptionHandler;
 import com.onepiecerpg.api.exception.RessourceIntrouvableException;
@@ -60,9 +63,12 @@ class CombatControllerTest {
     mockMvc.perform(post("/api/combats/zones/1"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.combatId").value(1))
+        .andExpect(jsonPath("$.ennemiId").value(2))
         .andExpect(jsonPath("$.ennemi").value("Bandit"))
         .andExpect(jsonPath("$.vieEnnemiActuelle").value(20))
         .andExpect(jsonPath("$.vieJoueurActuelle").value(10))
+        .andExpect(jsonPath("$.etatJoueur").value("NORMAL"))
+        .andExpect(jsonPath("$.etatEnnemi").value("NORMAL"))
         .andExpect(jsonPath("$.statut").value("EN_COURS"))
         .andExpect(jsonPath("$.recompense").isEmpty());
   }
@@ -84,7 +90,8 @@ class CombatControllerTest {
   @DisplayName("Doit utiliser une capacité")
   void shouldUseCapacite() throws Exception {
     CombatResponse response = new CombatResponse(
-        1L, "Bandit", 12, 8, 7, false, false, StatutCombat.EN_COURS, null);
+        1L, 2L, "Bandit", 12, 8, 7, EtatCombat.NORMAL, EtatCombat.NORMAL,
+        false, false, StatutCombat.EN_COURS, List.of("Luffy utilise Pistol"), null);
 
     when(combatService.utiliserCapacite(1L)).thenReturn(response);
 
@@ -93,6 +100,7 @@ class CombatControllerTest {
         .andExpect(jsonPath("$.vieEnnemiActuelle").value(12))
         .andExpect(jsonPath("$.vieJoueurActuelle").value(8))
         .andExpect(jsonPath("$.enduranceActuelle").value(7))
+        .andExpect(jsonPath("$.historique[0]").value("Luffy utilise Pistol"))
         .andExpect(jsonPath("$.recompense").isEmpty());
   }
 
@@ -100,7 +108,8 @@ class CombatControllerTest {
   @DisplayName("Doit retourner une récompense en cas de victoire")
   void shouldReturnRewardWhenVictory() throws Exception {
     CombatResponse response = new CombatResponse(
-        1L, "Bandit", 0, 8, 7, false, false, StatutCombat.VICTOIRE,
+        1L, 2L, "Bandit", 0, 8, 7, EtatCombat.NORMAL, EtatCombat.NORMAL,
+        false, false, StatutCombat.VICTOIRE, List.of("Victoire contre Bandit"),
         new RecompenseCombatResponse(10, 100L));
 
     when(combatService.utiliserCapacite(1L)).thenReturn(response);
@@ -116,7 +125,8 @@ class CombatControllerTest {
   @DisplayName("Doit indiquer la victoire contre le boss Higuma et débloquer les factions")
   void shouldUnlockFactionsWhenHigumaDefeated() throws Exception {
     CombatResponse response = new CombatResponse(
-        1L, "Higuma", 0, 8, 7, true, true, StatutCombat.VICTOIRE,
+        1L, 1L, "Higuma", 0, 8, 7, EtatCombat.NORMAL, EtatCombat.NORMAL,
+        true, true, StatutCombat.VICTOIRE, List.of("Victoire contre Higuma"),
         new RecompenseCombatResponse(50, 500L));
 
     when(combatService.utiliserCapacite(1L)).thenReturn(response);
@@ -174,6 +184,8 @@ class CombatControllerTest {
   }
 
   private CombatResponse combatResponse(StatutCombat statut) {
-    return new CombatResponse(1L, "Bandit", 20, 10, 8, false, false, statut, null);
+    return new CombatResponse(
+        1L, 2L, "Bandit", 20, 10, 8, EtatCombat.NORMAL, EtatCombat.NORMAL,
+        false, false, statut, List.of(), null);
   }
 }

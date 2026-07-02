@@ -113,12 +113,14 @@ public class DataInitializer implements CommandLineRunner {
 
     creerPersonnageLuffySiAbsent(Set.of(coupDePoing, coupDePied, lait));
 
-    creerEnnemiSiAbsent(
+   creerEnnemiSiAbsent(
         Ennemi.builder()
             .nom("Bandit faible")
             .vieMax(12)
             .puissance(2)
             .boss(false)
+            .niveauRequis(1)
+            .nomImage("bandit-faible")
             .zone(villageFuschia)
             .capacites(Set.of(coupDePoing))
             .build());
@@ -129,6 +131,8 @@ public class DataInitializer implements CommandLineRunner {
             .vieMax(20)
             .puissance(3)
             .boss(false)
+            .niveauRequis(1)
+            .nomImage("bandit")
             .zone(villageFuschia)
             .capacites(Set.of(coupDePoing, coupDePied))
             .build());
@@ -139,6 +143,8 @@ public class DataInitializer implements CommandLineRunner {
             .vieMax(28)
             .puissance(4)
             .boss(false)
+            .niveauRequis(1)
+            .nomImage("bandit-robuste")
             .zone(villageFuschia)
             .capacites(Set.of(coupDePoing, coupDePied))
             .build());
@@ -149,10 +155,12 @@ public class DataInitializer implements CommandLineRunner {
             .vieMax(45)
             .puissance(6)
             .boss(true)
+            .niveauRequis(5)
+            .nomImage("higuma")
             .zone(villageFuschia)
             .capacites(Set.of(coupDePoing, coupDePied, intimidation))
             .build());
-
+            
     creerNewsSiAbsente();
   }
 

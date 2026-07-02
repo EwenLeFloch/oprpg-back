@@ -5,6 +5,7 @@ public record ProgressionJoueurResponse(
 
     int niveau,
     int experience,
+    int experienceRequise,
 
     int enduranceMax,
     int enduranceActuelle,

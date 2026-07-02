@@ -121,8 +121,9 @@ class CombatServiceTest {
   void shouldImposeBossWhenLevelReached() {
     ProgressionJoueur progression = progression();
     progression.setNiveau(5);
-    Zone zone = zone(5);
+    Zone zone = zone(1);
     Ennemi boss = ennemiSansCapacite("Higuma", true, zone, 6);
+    boss.setNiveauRequis(5);
 
     mockProgressionConnectee(progression);
     when(zoneRepository.findById(1L)).thenReturn(Optional.of(zone));
@@ -138,6 +139,31 @@ class CombatServiceTest {
     });
 
     assertThat(combatService.demarrerCombat(1L).ennemi()).isEqualTo("Higuma");
+  }
+
+  @Test
+  void shouldNotImposeBossWhenPlayerLevelBelowBossRequirement() {
+    ProgressionJoueur progression = progression();
+    Zone zone = zone(1);
+    Ennemi boss = ennemiSansCapacite("Higuma", true, zone, 6);
+    boss.setNiveauRequis(5);
+    Ennemi bandit = ennemiSansCapacite("Bandit", false, zone, 3);
+
+    mockProgressionConnectee(progression);
+    when(zoneRepository.findById(1L)).thenReturn(Optional.of(zone));
+    when(combatRepository.findByProgressionJoueurIdAndStatut(1L, StatutCombat.EN_COURS))
+        .thenReturn(Optional.empty());
+    when(ennemiRepository.findByZoneIdAndBossTrue(1L)).thenReturn(Optional.of(boss));
+    when(ennemiRepository.findByZoneIdAndBossFalse(1L)).thenReturn(List.of(bandit));
+    when(combatRepository.save(any())).thenAnswer(inv -> {
+      Combat c = inv.getArgument(0);
+      c.setId(1L);
+      return c;
+    });
+
+    CombatResponse response = combatService.demarrerCombat(1L);
+
+    assertThat(response.ennemi()).isEqualTo("Bandit");
   }
 
   @Test
@@ -467,6 +493,98 @@ class CombatServiceTest {
     assertThat(response.statut()).isEqualTo(StatutCombat.VICTOIRE);
     assertThat(response.recompense().experience()).isBetween(75, 113);
     assertThat(response.recompense().prime()).isBetween(625L, 1000L);
+  }
+
+  @Test
+  void shouldExposeEnnemiIdEtatEtHistoriqueApresAttaque() {
+    ProgressionJoueur progression = progression();
+    progression.setPuissance(1);
+
+    Capacite attaque = capacite(1L, TypeCapacite.ATTAQUE, 5, 5);
+    attaque.setNom("Gomu Gomu no Pistol");
+    attaque.setPrecision(100);
+    progression.getPersonnage().setCapacites(new HashSet<>(Set.of(attaque)));
+
+    Ennemi ennemi = ennemiSansCapacite("Bandit", false, zone(1), 3);
+    ennemi.setId(7L);
+    Combat combat = combat(progression, ennemi, 20);
+
+    mockProgressionConnectee(progression);
+    when(combatRepository.findByProgressionJoueurIdAndStatut(1L, StatutCombat.EN_COURS))
+        .thenReturn(Optional.of(combat));
+
+    CombatResponse response = combatService.utiliserCapacite(1L);
+
+    assertThat(response.ennemiId()).isEqualTo(7L);
+    assertThat(response.etatJoueur()).isEqualTo(EtatCombat.NORMAL);
+    assertThat(response.etatEnnemi()).isEqualTo(EtatCombat.NORMAL);
+    assertThat(response.historique())
+        .contains("Luffy utilise Gomu Gomu no Pistol")
+        .anyMatch(ligne -> ligne.contains("dégâts à Bandit"));
+  }
+
+  @Test
+  void shouldExposeEtatParalyseApresParalysieReussie() {
+    ProgressionJoueur progression = progression();
+
+    Capacite paralysie = capacite(1L, TypeCapacite.PARALYSIE, 0, 0);
+    paralysie.setDuree(2);
+    paralysie.setPrecision(100);
+    progression.getPersonnage().setCapacites(new HashSet<>(Set.of(paralysie)));
+
+    Ennemi ennemi = ennemiSansCapacite("Bandit", false, zone(1), 5);
+    Combat combat = combat(progression, ennemi, 20);
+
+    mockProgressionConnectee(progression);
+    when(combatRepository.findByProgressionJoueurIdAndStatut(1L, StatutCombat.EN_COURS))
+        .thenReturn(Optional.of(combat));
+
+    CombatResponse response = combatService.utiliserCapacite(1L);
+
+    assertThat(response.etatEnnemi()).isEqualTo(EtatCombat.PARALYSE);
+  }
+
+  @Test
+  void shouldAccumulerHistoriqueSurPlusieursTours() {
+    ProgressionJoueur progression = progression();
+    Capacite attaque = capacite(1L, TypeCapacite.ATTAQUE, 1, 1);
+    attaque.setPrecision(100);
+    progression.getPersonnage().setCapacites(new HashSet<>(Set.of(attaque)));
+
+    Ennemi ennemi = ennemiSansCapacite("Bandit", false, zone(1), 0);
+    Combat combat = combat(progression, ennemi, 20);
+
+    mockProgressionConnectee(progression);
+    when(combatRepository.findByProgressionJoueurIdAndStatut(1L, StatutCombat.EN_COURS))
+        .thenReturn(Optional.of(combat));
+
+    combatService.utiliserCapacite(1L);
+    CombatResponse second = combatService.utiliserCapacite(1L);
+
+    assertThat(second.historique()).hasSizeGreaterThan(3);
+  }
+
+  @Test
+  void shouldStarterCombatAvecLigneHistoriqueInitiale() {
+    ProgressionJoueur progression = progression();
+    Zone zone = zone(1);
+    Ennemi ennemi = ennemiSansCapacite("Bandit", false, zone, 3);
+
+    mockProgressionConnectee(progression);
+    when(zoneRepository.findById(1L)).thenReturn(Optional.of(zone));
+    when(combatRepository.findByProgressionJoueurIdAndStatut(1L, StatutCombat.EN_COURS))
+        .thenReturn(Optional.empty());
+    when(ennemiRepository.findByZoneIdAndBossTrue(1L)).thenReturn(Optional.empty());
+    when(ennemiRepository.findByZoneIdAndBossFalse(1L)).thenReturn(List.of(ennemi));
+    when(combatRepository.save(any())).thenAnswer(inv -> {
+      Combat c = inv.getArgument(0);
+      c.setId(1L);
+      return c;
+    });
+
+    CombatResponse response = combatService.demarrerCombat(1L);
+
+    assertThat(response.historique()).containsExactly("Combat engagé contre Bandit");
   }
 
   private void mockProgressionConnectee(ProgressionJoueur progression) {
